@@ -1,0 +1,2 @@
+langchain-google-genai==2.0.8
+scrapegraphai==1.36.0

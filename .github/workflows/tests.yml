@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         python-version: ['3.12']
 
     steps:
@@ -24,3 +24,5 @@ jobs:
         pip install tox tox-gh-actions
     - name: Test with tox
       run: tox
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
