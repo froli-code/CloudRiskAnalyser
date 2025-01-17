@@ -1,4 +1,4 @@
-# import pytest
+#!/usr/bin/python
 
 # Own modules
 import cloudriskanalyser.analyser as cra

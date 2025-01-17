@@ -1,25 +1,17 @@
 #!/usr/bin/python
-import os
 import sys
 import typing
 
 from scrapegraphai.graphs import SmartScraperGraph
 
+# Own modules
+from cloudriskanalyser.llm_data import LLMConfiguration as cfg
+from cloudriskanalyser.llm_data import LLMPromts as prm
+
+
 #################################
 # Constants
 #################################
-GOOGLE_APIKEY = os.environ["GEMINI_API_KEY"]
-GRAPH_CONFIG = {
-    "llm": {
-        "api_key": GOOGLE_APIKEY,
-        "model": "google_genai/gemini-1.5-flash",
-        "model_tokens": 8192
-    }
-}
-
-PROMT_CHECK_CSP = "Does the proided URL describe a cloud storage application? \
-                   A cloud storage application is a webservice which allows a user to host their files, and share them with others. \
-                   Answer with a percentage, in a variable called 'percentage'."
 
 
 #################################
@@ -29,7 +21,7 @@ PROMT_CHECK_CSP = "Does the proided URL describe a cloud storage application? \
 def is_valid_csp(csp_url: str) -> bool:
 
     # check if the website is a legitimate CSP (LLM check)
-    output = get_scrape_output(csp_url, PROMT_CHECK_CSP)
+    output = get_scrape_output(csp_url, prm.PROMT_CHECK_CSP)
     percentage = output["percentage"]
 
     # check if a valid result was received
@@ -52,7 +44,7 @@ def get_scrape_output(source: str, promt: str) -> dict[str, typing.Any]:
     smart_scraper_graph = SmartScraperGraph(
         source=source,
         prompt=promt,
-        config=GRAPH_CONFIG
+        config=cfg.GRAPH_CONFIG
     )
 
     return smart_scraper_graph.run()  # type: ignore[no-any-return]
