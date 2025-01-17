@@ -42,4 +42,3 @@ def test_validate_csp_asdf():
         assert True
     else:
         assert False
-        
