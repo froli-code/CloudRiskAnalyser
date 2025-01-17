@@ -40,7 +40,7 @@ def is_valid_csp(csp_url: str) -> bool:
     else:
         print("There is a " + str(percentage) + "% chance that " + csp_url + " is a cloud service provider")
 
-        if percentage >= 50:
+        if int(percentage) >= 50:
             return True
         else:
             return False
