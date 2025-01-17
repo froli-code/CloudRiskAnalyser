@@ -5,8 +5,8 @@ import typing
 from scrapegraphai.graphs import SmartScraperGraph
 
 # Own modules
-from cloudriskanalyser.llm_data import LLMConfiguration as cfg
-from cloudriskanalyser.llm_data import LLMPromts as prm
+from llm_data import LLMConfiguration as cfg
+from llm_data import LLMPromts as prm
 
 
 #################################
@@ -58,9 +58,11 @@ def main():
     # accept user input
     print("Welcome to CloudRiskAnalyser")
     application_url = input("Please enter the domain name of a cloud storage service which you would like to assess (format: https://www.example.com): ")
+    user_country = input("Please enter your residency country: ")  # noqa: F841
 
+    print("Starting assessment...")
     if (is_valid_csp(application_url)):
-        print(application_url + " is a valid cloud storge service.")
+        print(application_url + " is a valid cloud storge service. Continuing...")
     else:
         print(application_url + " is no valid cloud storage service. Please try again.")
         sys.exit()

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 addopts = ["--cov=src/cloudriskanalyser/",
            "--import-mode=importlib"]
-pythonpath = "src"
+pythonpath = "src/cloudriskanalyser"
 testpaths = [
     "tests"
 ]

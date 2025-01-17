@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # Own modules
-import cloudriskanalyser.analyser as cra
+import analyser as cra
 
 
 def test_validate_csp_dropbox():
