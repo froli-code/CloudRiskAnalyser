@@ -12,6 +12,7 @@ from llm_data import LLMPromts as prm
 #################################
 # Constants
 #################################
+URL_CVE_MITRE: str = "https://cve.mitre.org/"
 
 
 #################################
@@ -38,6 +39,45 @@ def is_valid_csp(csp_url: str) -> bool:
             return False
 
 
+# Evaluate the "Lack of Control" risk
+def get_risk_lack_of_control(csp_url: str) -> bool:
+    output = get_scrape_output(URL_CVE_MITRE, prm.get_promt_check_risk_lack_of_control(csp_url))
+    result = output["result"]
+
+    if result == "NA":
+        print("Lack of Control Risk: No valid output")
+        return False
+    else:
+        print("Output: " + result)
+        return True
+
+
+# Evaluate the "Insec Auth" risk
+def get_risk_insec_auth(csp_url: str) -> bool:
+    output = get_scrape_output(csp_url, prm.PROMT_CHECK_RISK_INSEC_AUTH)
+    result = output["result"]
+
+    if result == "NA":
+        print("Insec Auth Risk: No valid output")
+        return False
+    else:
+        print("Output: " + result)
+        return True
+
+
+# Evaluate the "Compliance Issues" risk
+def get_risk_comp_issues(csp_url: str) -> bool:
+    output = get_scrape_output(csp_url, prm.PROMT_CHECK_RISK_COMP_ISSUES)
+    result = output["result"]
+
+    if result == "NA":
+        print("Compliance Issues Risk: No valid output")
+        return False
+    else:
+        print("Output: " + result)
+        return True
+
+
 # Let the LLM search the content of a source
 def get_scrape_output(source: str, promt: str) -> dict[str, typing.Any]:
 
@@ -55,17 +95,27 @@ def get_scrape_output(source: str, promt: str) -> dict[str, typing.Any]:
 #################################
 def main():
 
-    # accept user input
+    # --- accept user input
     print("Welcome to CloudRiskAnalyser")
     application_url = input("Please enter the domain name of a cloud storage service which you would like to assess (format: https://www.example.com): ")
     user_country = input("Please enter your residency country: ")  # noqa: F841
 
+    # --- find out if data is a valid CSP
     print("Starting assessment...")
     if (is_valid_csp(application_url)):
         print(application_url + " is a valid cloud storge service. Continuing...")
     else:
         print(application_url + " is no valid cloud storage service. Please try again.")
         sys.exit()
+
+    # --- gather data for assessing risk
+    get_risk_lack_of_control(application_url)
+
+    get_risk_comp_issues(application_url)
+
+    get_risk_comp_issues(application_url)
+
+    # --- calculate result
 
 
 if __name__ == "__main__":
