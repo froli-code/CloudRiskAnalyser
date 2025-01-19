@@ -21,7 +21,7 @@ class LLMResearcher:
                             )
         self.search = GoogleSearchAPIWrapper()
         self.web_research_retriever = WebResearchRetriever.from_llm(
-                                llm=self.llm,
+                                llm=self.llm,  # type: ignore[arg-type]
                                 vectorstore=self.vectorstore,
                                 search=self.search,
                                 allow_dangerous_requests=True
