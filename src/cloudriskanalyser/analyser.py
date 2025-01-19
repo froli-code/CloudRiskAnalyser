@@ -5,6 +5,7 @@ import sys
 # Own modules
 from llm_data import LLMResearcher
 from llm_data import LLMPrompts as prm
+from risk_calculator import RiskCalculator
 
 
 #################################
@@ -24,10 +25,7 @@ def is_valid_csp(csp_name: str) -> bool:
     # check if a valid result was received
     print("There is a " + str(result) + "% chance that " + csp_name + " is a cloud service provider")
 
-    if int(result) >= 50:
-        return True
-    else:
-        return False
+    return int_to_bool(result)
 
 
 # Evaluate the "Lack of Control" risk
@@ -43,15 +41,16 @@ def get_risk_lack_of_control(csp_url: str) -> bool:
 
 
 # Evaluate the "Insec Auth" risk
-def get_risk_insec_auth(csp_url: str) -> bool:
-    result = "NA"
+def get_risk_insec_auth(risk_calculator: RiskCalculator, csp_name: str) -> RiskCalculator:
+    result_mfa = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_1.format(csp=csp_name))
+    result_proto = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_2.format(csp=csp_name))
 
-    if result == "NA":
-        print("Insec Auth Risk: No valid output")
-        return False
-    else:
-        print("Output: " + result)
-        return True
+    print("There is a " + str(result_mfa) + "% chance that " + csp_name + " supports MFA.")
+    print("There is a " + str(result_proto) + "% chance that " + csp_name + " supports user authentication over authentication protocols.")
+
+    risk_calculator.set_risk_params_insec_auth(int_to_bool(result_mfa), int_to_bool(result_proto))
+
+    return risk_calculator
 
 
 # Evaluate the "Compliance Issues" risk
@@ -64,6 +63,14 @@ def get_risk_comp_issues(csp_url: str) -> bool:
     else:
         print("Output: " + result)
         return True
+
+
+# This method is used to convert integer values to bool
+def int_to_bool(input: int) -> bool:
+    if input >= 50:
+        return True
+    else:
+        return False
 
 
 #################################
@@ -81,7 +88,7 @@ def main():
     # --- find out if data is a valid CSP
     print("Starting assessment...")
     if (is_valid_csp(application_name)):
-        print(application_name + " is a valid cloud storge service. Continuing...")
+        risk_calculator = RiskCalculator(application_name, user_country)
     else:
         print(application_name + " is no valid cloud storage service. Please try again.")
         sys.exit()
@@ -89,11 +96,12 @@ def main():
     # --- gather data for assessing risk
     # get_risk_lack_of_control(application_url)
 
-    # get_risk_comp_issues(application_url)
+    risk_calculator = get_risk_insec_auth(risk_calculator, application_name)
 
     # get_risk_comp_issues(application_url)
 
     # --- calculate result
+    risk_calculator.print_instance_vars()
 
 
 if __name__ == "__main__":

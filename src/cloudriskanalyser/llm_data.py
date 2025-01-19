@@ -29,10 +29,18 @@ class LLMResearcher:
         self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(self.llm, retriever=self.web_research_retriever)
 
     # Search something
-    def get_research_results(self, question: str) -> str:
+    def get_research_results(self, question: str) -> int:
         result = self.qa_chain.invoke(input={"question": question})
 
-        return str(result['answer']).replace("\n", "")
+        result_cleansed = str(result["answer"]).replace("\n", "")
+
+        try:
+            result_int = int(result_cleansed)
+        except ValueError:
+            print("LLM did not return an integer value.")
+            print("LLM Output: " + result_cleansed)
+
+        return result_int
 
 
 #################################
@@ -45,9 +53,6 @@ class LLMPrompts:
 
     # --- Assessing if the input is actually a CSP
     PROMT_CHECK_CSP: str = "Is {csp} a cloud storage application? Provide the answer in likelihood from 0 to 100. Only provide the number in the answer."
-    # PROMT_CHECK_CSP: str = "Does the provided URL describe a cloud storage application? \
-    #            A cloud storage application is a webservice which allows a user to host their files, and share them with others. \
-    #            Answer with a percentage, in a variable called 'percentage'."
 
     # --- Assessing the "Lack of control" risk
     PROMT_CHECK_RISK_LACK_OF_CONTROL_1: str = "Assess if the cloud storage application "
@@ -57,7 +62,10 @@ class LLMPrompts:
                 Provide the answer in a variable called 'result'."
 
     # --- Assessing the "Insecure auth" risk
-    PROMT_CHECK_RISK_INSEC_AUTH: str = "Return output 'NA' in a variable called 'result'"
+    PROMT_CHECK_RISK_INSEC_AUTH_1: str = "Does {csp} support MFA? Provide the answer in likelihood from 0 to 100. Only provide the number in the answer."
+    PROMT_CHECK_RISK_INSEC_AUTH_2: str = "Does {csp} support user authentication over the protocols OIDC, SAML or OAuth? \
+                If only a paid-tier allows those methods, consider it as being supported. \
+                Provide the answer in likelihood from 0 to 100. Only provide the number in the answer."
 
     # --- Assessing the "Compliance issues" risk
     PROMT_CHECK_RISK_COMP_ISSUES: str = "Return output 'NA' in a variable called 'result'"
