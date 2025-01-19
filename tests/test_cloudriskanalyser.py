@@ -5,32 +5,32 @@ import analyser as cra
 
 
 def test_validate_csp_dropbox():
-    # www.dropbox.com is a valid CSP, result "True" expected
-    if cra.is_valid_csp("http://www.dropbox.com"):
+    # Dropbox is a valid CSP, result "True" expected
+    if cra.is_valid_csp("Dropbox"):
         assert True
     else:
         assert False
 
 
 def test_validate_csp_onedrive():
-    # http://www.onedrive.com is a valid CSP, result "True" expected
-    if cra.is_valid_csp("http://www.onedrive.com"):
+    # Onedrive is a valid CSP, result "True" expected
+    if cra.is_valid_csp("Onedrive"):
         assert True
     else:
         assert False
 
 
 def test_validate_csp_box():
-    # http://www.box.com is a valid CSP, result "True" expected
-    if cra.is_valid_csp("http://www.box.com"):
+    # Box is a valid CSP, result "True" expected
+    if cra.is_valid_csp("Box"):
         assert True
     else:
         assert False
 
 
 def test_validate_csp_wikipedia():
-    # http://www.wikipedia.org is NOT avalid CSP, result "False" expected
-    if not cra.is_valid_csp("http://www.wikipedia.org"):
+    # Wikipedia is NOT avalid CSP, result "False" expected
+    if not cra.is_valid_csp("Wikipedia"):
         assert True
     else:
         assert False
