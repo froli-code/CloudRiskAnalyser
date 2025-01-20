@@ -50,6 +50,35 @@ def test_validate_csp_asdf():
 
 
 def test_insec_auth_risk_dropbox():
+    # "Dropbox" supports MFA and SAML, result "True" expected
+    csp_name = "Dropbox"
+    user_country = "Switzerland"
+
+    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_insec_auth(risk_calculator)
+
+    if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
+        assert True
+    else:
+        assert False
+
+
+def test_insec_auth_risk_onedrive():
+    # "Onedrive" supports MFA and SAML, result "True" expected
+    csp_name = "Onedrive"
+    user_country = "Switzerland"
+
+    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_insec_auth(risk_calculator)
+
+    if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
+        assert True
+    else:
+        assert False
+
+
+def test_insec_auth_risk_box():
+    # "Box" supports MFA and SAML, result "True" expected
     csp_name = "Dropbox"
     user_country = "Switzerland"
 
