@@ -24,13 +24,19 @@ class LLMResearcher:
                                 llm=self.llm,  # type: ignore[arg-type]
                                 vectorstore=self.vectorstore,
                                 search=self.search,
-                                allow_dangerous_requests=True
+                                allow_dangerous_requests=True,
+                                num_search_results=10
                             )
-        self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(self.llm, retriever=self.web_research_retriever)
+
+        self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(self.llm, retriever=self.vectorstore.as_retriever())
 
     # Search something
-    def get_research_results(self, question: str) -> int:
-        result = self.qa_chain.invoke(input={"question": question})
+    def get_research_results(self, question_google: str, question_data_extract: str) -> int:
+        # Search the web and store the result in the vectorstore
+        self.web_research_retriever.invoke(question_google)
+
+        # Ask the LLM to extract information from the vectorstore
+        result = self.qa_chain.invoke(question_data_extract)
 
         result_cleansed = str(result["answer"]).replace("\n", "")
 
@@ -39,6 +45,7 @@ class LLMResearcher:
         except ValueError:
             print("LLM did not return an integer value.")
             print("LLM Output: " + result_cleansed)
+            return 0
 
         return result_int
 
@@ -52,7 +59,9 @@ class LLMPrompts:
     # --------------------------------
 
     # --- Assessing if the input is actually a CSP
-    PROMT_CHECK_CSP: str = "Is {csp} a cloud storage application? Provide the answer in likelihood from 0 to 100. Only provide the number in the answer."
+    PROMT_CHECK_CSP_DATA_EXTRACT: str = "Is {csp} a cloud storage application? Provide the answer in likelihood from 0 to 100. \
+                Only provide the number in the answer."
+    PROMT_CHECK_CSP_GOOGLE: str = "Find out if {csp} is a cloud storage application. Only generate two questions."
 
     # --- Assessing the "Lack of control" risk
     PROMT_CHECK_RISK_LACK_OF_CONTROL_1: str = "Assess if the cloud storage application "
@@ -62,9 +71,12 @@ class LLMPrompts:
                 Provide the answer in a variable called 'result'."
 
     # --- Assessing the "Insecure auth" risk
-    PROMT_CHECK_RISK_INSEC_AUTH_1: str = "Does {csp} support MFA? Provide the answer in likelihood from 0 to 100. Only provide the number in the answer."
-    PROMT_CHECK_RISK_INSEC_AUTH_2: str = "Does {csp} support user authentication over the protocols OIDC, SAML or OAuth? \
-                If only a paid-tier allows those methods, consider it as being supported. \
+    PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE: str = "Find out if {csp} supports MFA.  Only generate two questions."
+    PROMT_CHECK_RISK_INSEC_AUTH_1_DATA_EXTRACT: str = "Does {csp} support MFA? Provide the answer in likelihood from 0 to 100. \
+                Only provide the number in the answer."
+
+    PROMT_CHECK_RISK_INSEC_AUTH_2_GOOGLE: str = "Find out if {csp} supports SSO. Only generate two questions."
+    PROMT_CHECK_RISK_INSEC_AUTH_2_DATA_EXTRACT: str = "Does {csp} support SSO with OIDC, SAML or OAuth? \
                 Provide the answer in likelihood from 0 to 100. Only provide the number in the answer."
 
     # --- Assessing the "Compliance issues" risk

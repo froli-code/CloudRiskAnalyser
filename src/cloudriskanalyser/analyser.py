@@ -20,7 +20,9 @@ URL_CVE_MITRE: str = "https://cve.mitre.org/"
 # Check if the provided application is a legitimate CSP
 def is_valid_csp(csp_name: str) -> bool:
 
-    result = LLMResearcher().get_research_results(prm.PROMT_CHECK_CSP.format(csp=csp_name))
+    result = LLMResearcher().get_research_results(prm.PROMT_CHECK_CSP_GOOGLE.format(csp=csp_name),
+                                                  prm.PROMT_CHECK_CSP_DATA_EXTRACT.format(csp=csp_name)
+                                                  )
 
     # check if a valid result was received
     print("There is a " + str(result) + "% chance that " + csp_name + " is a cloud service provider")
@@ -41,9 +43,14 @@ def get_risk_lack_of_control(csp_url: str) -> bool:
 
 
 # Evaluate the "Insec Auth" risk
-def get_risk_insec_auth(risk_calculator: RiskCalculator, csp_name: str) -> RiskCalculator:
-    result_mfa = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_1.format(csp=csp_name))
-    result_proto = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_2.format(csp=csp_name))
+def get_risk_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
+    csp_name = risk_calculator.csp_name
+    result_mfa = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE.format(csp=csp_name),
+                                                      prm.PROMT_CHECK_RISK_INSEC_AUTH_1_DATA_EXTRACT.format(csp=csp_name)
+                                                      )
+    result_proto = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_2_GOOGLE.format(csp=csp_name),
+                                                        prm.PROMT_CHECK_RISK_INSEC_AUTH_2_DATA_EXTRACT.format(csp=csp_name)
+                                                        )
 
     print("There is a " + str(result_mfa) + "% chance that " + csp_name + " supports MFA.")
     print("There is a " + str(result_proto) + "% chance that " + csp_name + " supports user authentication over authentication protocols.")
@@ -78,7 +85,10 @@ def int_to_bool(input: int) -> bool:
 #################################
 def main():
     logging.basicConfig()
-    logging.getLogger("langchain_community.retrievers.web_research").setLevel(logging.ERROR)
+    # Debug generation of Search-Queries
+    logging.getLogger("langchain_community.retrievers.web_research").setLevel(logging.INFO)
+    # Debug google-searches
+    logging.getLogger("googleapiclient.discovery").setLevel(logging.DEBUG)
 
     # --- accept user input
     print("Welcome to CloudRiskAnalyser")
@@ -96,7 +106,7 @@ def main():
     # --- gather data for assessing risk
     # get_risk_lack_of_control(application_url)
 
-    risk_calculator = get_risk_insec_auth(risk_calculator, application_name)
+    risk_calculator = get_risk_insec_auth(risk_calculator)
 
     # get_risk_comp_issues(application_url)
 
