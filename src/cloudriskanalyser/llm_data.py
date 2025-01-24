@@ -31,23 +31,25 @@ class LLMResearcher:
         self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(self.llm, retriever=self.vectorstore.as_retriever())
 
     # Search something
-    def get_research_results(self, question_google: str, question_data_extract: str) -> int:
+    def get_research_results(self, question_google: str, question_data_extract: str) -> str:
         # Search the web and store the result in the vectorstore
         self.web_research_retriever.invoke(question_google)
 
         # Ask the LLM to extract information from the vectorstore
         result = self.qa_chain.invoke(question_data_extract)
 
+        # DEBUGGING: allows the user to ask test different questions
+        user_input = "exit"
+        while user_input != "exit":
+            print("DEBUG-MODE: Insert question for LLM. Insert 'exit' to continue.")
+            user_input = input("Input: ")
+            if user_input != "exit":
+                result = self.qa_chain.invoke(user_input)
+                print("Debug LLM output: " + result["answer"])
+
         result_cleansed = str(result["answer"]).replace("\n", "")
 
-        try:
-            result_int = int(result_cleansed)
-        except ValueError:
-            print("LLM did not return an integer value.")
-            print("LLM Output: " + result_cleansed)
-            return 0
-
-        return result_int
+        return result_cleansed
 
 
 #################################
@@ -80,7 +82,16 @@ class LLMPrompts:
                 Provide the answer in likelihood from 0 to 100. Only provide the number in the answer."
 
     # --- Assessing the "Compliance issues" risk
-    PROMT_CHECK_RISK_COMP_ISSUES: str = "Return output 'NA' in a variable called 'result'"
+    PROMT_CHECK_RISK_COMP_ISSUES_1_GOOGLE: str = "Find out in which countries {csp} stores their user's data by default."
+    PROMT_CHECK_RISK_COMP_ISSUES_1_DATA_EXTRACT: str = "In which countries does {csp} store their user's data by default? \
+                Only provide the default locations as output in a list. Ignore the ones additional to the default. \
+                If not possible, provide only the text 'unknown'. If there are multiple results, separate them with semicolons."
+
+    PROMT_CHECK_RISK_COMP_ISSUES_2_GOOGLE: str = "Find out if {csp} offers the possibility to select where the user's data is stored."
+    PROMT_CHECK_RISK_COMP_ISSUES_2_DATA_EXTRACT: str = "Does {csp} provide different data-storage locations, in addition to the default?\
+                Only provide the country names of the additional ones in a list. \
+                If not possible, provide only the text 'unknown' without ANY other text, such as 'FINAL ANSWER'. \
+                If there are multiple results, separate them with semicolons."
 
     # --------------------------------
     # Shared Functions
@@ -89,4 +100,5 @@ class LLMPrompts:
     # --- Concat the two strings for "Lack of control" risk, together with the name of the CSP
     @classmethod
     def get_promt_check_risk_lack_of_control(cls, csp: str) -> str:
+
         return str(cls.PROMT_CHECK_RISK_LACK_OF_CONTROL_1 + csp + cls.PROMT_CHECK_RISK_LACK_OF_CONTROL_2)

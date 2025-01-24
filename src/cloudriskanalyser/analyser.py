@@ -24,10 +24,7 @@ def is_valid_csp(csp_name: str) -> bool:
                                                   prm.PROMT_CHECK_CSP_DATA_EXTRACT.format(csp=csp_name)
                                                   )
 
-    # check if a valid result was received
-    print("There is a " + str(result) + "% chance that " + csp_name + " is a cloud service provider")
-
-    return int_to_bool(result)
+    return str_to_bool(result)
 
 
 # Evaluate the "Lack of Control" risk
@@ -52,29 +49,39 @@ def get_risk_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
                                                         prm.PROMT_CHECK_RISK_INSEC_AUTH_2_DATA_EXTRACT.format(csp=csp_name)
                                                         )
 
-    print("There is a " + str(result_mfa) + "% chance that " + csp_name + " supports MFA.")
-    print("There is a " + str(result_proto) + "% chance that " + csp_name + " supports user authentication over authentication protocols.")
-
-    risk_calculator.set_risk_params_insec_auth(int_to_bool(result_mfa), int_to_bool(result_proto))
+    risk_calculator.set_risk_params_insec_auth(str_to_bool(result_mfa), str_to_bool(result_proto))
 
     return risk_calculator
 
 
 # Evaluate the "Compliance Issues" risk
-def get_risk_comp_issues(csp_url: str) -> bool:
-    result = "NA"
+def get_risk_comp_issues(risk_calculator: RiskCalculator) -> RiskCalculator:
+    csp_name = risk_calculator.csp_name
+    result_default_countries: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_1_GOOGLE.format(csp=csp_name),
+                                                                         prm.PROMT_CHECK_RISK_COMP_ISSUES_1_DATA_EXTRACT.format(csp=csp_name)
+                                                                         )
+    result_possible_countries: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_2_GOOGLE.format(csp=csp_name),
+                                                                          prm.PROMT_CHECK_RISK_COMP_ISSUES_2_DATA_EXTRACT.format(csp=csp_name)
+                                                                          )
 
-    if result == "NA":
-        print("Compliance Issues Risk: No valid output")
+    risk_calculator.set_risk_params_comp_issues(result_default_countries.split(";"), result_possible_countries.split(";"))
+
+    return risk_calculator
+
+
+# This method is used to convert string values to bool
+def str_to_bool(input: str) -> bool:
+    # an integer value is expected in the string.
+    # this integer is then assessed and converted to bool.
+
+    try:
+        result_int = int(input)
+    except ValueError:
+        print("LLM did not return an integer value.")
+        print("LLM Output: " + input)
         return False
-    else:
-        print("Output: " + result)
-        return True
 
-
-# This method is used to convert integer values to bool
-def int_to_bool(input: int) -> bool:
-    if input >= 50:
+    if result_int >= 50:
         return True
     else:
         return False
@@ -86,9 +93,9 @@ def int_to_bool(input: int) -> bool:
 def main():
     logging.basicConfig()
     # Debug generation of Search-Queries
-    logging.getLogger("langchain_community.retrievers.web_research").setLevel(logging.INFO)
+    # logging.getLogger("langchain_community.retrievers.web_research").setLevel(logging.INFO)
     # Debug google-searches
-    logging.getLogger("googleapiclient.discovery").setLevel(logging.DEBUG)
+    # logging.getLogger("googleapiclient.discovery").setLevel(logging.DEBUG)
 
     # --- accept user input
     print("Welcome to CloudRiskAnalyser")
@@ -108,7 +115,7 @@ def main():
 
     risk_calculator = get_risk_insec_auth(risk_calculator)
 
-    # get_risk_comp_issues(application_url)
+    risk_calculator = get_risk_comp_issues(risk_calculator)
 
     # --- calculate result
     risk_calculator.print_instance_vars()

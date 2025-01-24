@@ -21,8 +21,10 @@ class RiskCalculator:
         self.csp_supports_auth_protocols = csp_supports_auth_protocols
 
     # Set information for "comp_issues" risk
-    def set_risk_params_comp_issues(self) -> None:
-        pass
+    def set_risk_params_comp_issues(self, csp_default_countries: list[str], csp_possible_countries: list[str]) -> None:
+        # If not known, "unknown" will be passed
+        self.csp_default_countries = csp_default_countries
+        self.csp_possible_countries = csp_possible_countries
 
     # Calculate risk based on information stored in this class
     def get_risk(self) -> None:

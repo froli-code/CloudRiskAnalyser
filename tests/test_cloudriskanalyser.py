@@ -90,6 +90,42 @@ def test_insec_auth_risk_box():
     else:
         assert False
 
+
+def test_comp_issues_risk_dropbox():
+    # Check which countries are supported by "Dropbox"
+    csp_name: str = "Dropbox"
+    user_country: str = "Switzerland"
+    # csp_default_countries: list[str] = ['United States']
+    # csp_possible_countries: list[str] = ['Germany', ' Australia', ' Japan']
+
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_comp_issues(risk_calculator)
+
+    if risk_calculator.csp_default_countries != "unknown" and \
+       risk_calculator.csp_possible_countries != "unknown":
+        assert True
+    else:
+        assert False
+
+
+def test_comp_issues_risk_onedrive():
+    # Check which countries are supported by "Onedrive"
+    # There would be many possible locations, but the current application cannot identify this.
+    csp_name: str = "Onedrive"
+    user_country: str = "Switzerland"
+    csp_default_countries: list[str] = ['unknown']
+    csp_possible_countries: list[str] = ['unknown']
+
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_comp_issues(risk_calculator)
+
+    if risk_calculator.csp_default_countries == csp_default_countries and \
+       risk_calculator.csp_possible_countries == csp_possible_countries:
+        assert True
+    else:
+        assert False
+
+
 #################################
 # Shared Functions
 #################################
