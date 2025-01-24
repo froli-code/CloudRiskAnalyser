@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import logging
 import sys
+import warnings
 
 # Own modules
 from llm_data import LLMResearcher
@@ -91,11 +92,17 @@ def str_to_bool(input: str) -> bool:
 # Main
 #################################
 def main():
+    # --- Logging setup
     logging.basicConfig()
+    
     # Debug generation of Search-Queries
     # logging.getLogger("langchain_community.retrievers.web_research").setLevel(logging.INFO)
+
     # Debug google-searches
     # logging.getLogger("googleapiclient.discovery").setLevel(logging.DEBUG)
+
+    # Prevent logging of lang-chain deprecation warnings (new package is not compatible currently)
+    warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
     # --- accept user input
     print("Welcome to CloudRiskAnalyser")
