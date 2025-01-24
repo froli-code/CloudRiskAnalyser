@@ -26,3 +26,5 @@ jobs:
       run: tox
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        GOOGLE_CSE_ID:  ${{ secrets.GOOGLE_CSE_ID }}
