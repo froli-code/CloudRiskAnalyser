@@ -1,8 +1,15 @@
+import logging
+
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_chroma import Chroma
 from langchain_community.retrievers.web_research import WebResearchRetriever
 from langchain_community.utilities.google_search import GoogleSearchAPIWrapper
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
+#################################
+# Global variables
+#################################
+logger = logging.getLogger(__name__)
 
 
 #################################
@@ -35,8 +42,12 @@ class LLMResearcher:
         # Search the web and store the result in the vectorstore
         self.web_research_retriever.invoke(question_google)
 
+        logger.info("Asking the LLM: " + question_data_extract)
+
         # Ask the LLM to extract information from the vectorstore
         result = self.qa_chain.invoke(question_data_extract)
+
+        logger.info("Answer from LLM: " + result["answer"])
 
         # DEBUGGING: allows the user to ask test different questions
         user_input = "exit"

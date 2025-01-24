@@ -8,11 +8,16 @@ from llm_data import LLMResearcher
 from llm_data import LLMPrompts as prm
 from risk_calculator import RiskCalculator
 
+#################################
+# Global variables
+#################################
+logger = logging.getLogger(__name__)
 
 #################################
 # Constants
 #################################
 URL_CVE_MITRE: str = "https://cve.mitre.org/"
+LOG_FORMAT: str = "%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)s - %(funcName)s ] %(message)s"
 
 
 #################################
@@ -24,6 +29,8 @@ def is_valid_csp(csp_name: str) -> bool:
     result = LLMResearcher().get_research_results(prm.PROMT_CHECK_CSP_GOOGLE.format(csp=csp_name),
                                                   prm.PROMT_CHECK_CSP_DATA_EXTRACT.format(csp=csp_name)
                                                   )
+
+    logger.info("Returning result from LLM: " + result)
 
     return str_to_bool(result)
 
@@ -50,6 +57,8 @@ def get_risk_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
                                                         prm.PROMT_CHECK_RISK_INSEC_AUTH_2_DATA_EXTRACT.format(csp=csp_name)
                                                         )
 
+    logger.info("Returning result from LLM: " + result_mfa + " / " + result_proto)
+
     risk_calculator.set_risk_params_insec_auth(str_to_bool(result_mfa), str_to_bool(result_proto))
 
     return risk_calculator
@@ -64,6 +73,8 @@ def get_risk_comp_issues(risk_calculator: RiskCalculator) -> RiskCalculator:
     result_possible_countries: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_2_GOOGLE.format(csp=csp_name),
                                                                           prm.PROMT_CHECK_RISK_COMP_ISSUES_2_DATA_EXTRACT.format(csp=csp_name)
                                                                           )
+
+    logger.info("Returning result from LLM: " + result_default_countries + " / " + result_possible_countries)
 
     risk_calculator.set_risk_params_comp_issues(result_default_countries.split(";"), result_possible_countries.split(";"))
 
@@ -93,16 +104,13 @@ def str_to_bool(input: str) -> bool:
 #################################
 def main():
     # --- Logging setup
-    logging.basicConfig()
-    
-    # Debug generation of Search-Queries
-    # logging.getLogger("langchain_community.retrievers.web_research").setLevel(logging.INFO)
+    logging.basicConfig(filename='analyser.log', level=logging.INFO, format=LOG_FORMAT)
 
     # Debug google-searches
     # logging.getLogger("googleapiclient.discovery").setLevel(logging.DEBUG)
 
     # Prevent logging of lang-chain deprecation warnings (new package is not compatible currently)
-    warnings.filterwarnings("ignore", category=DeprecationWarning) 
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
 
     # --- accept user input
     print("Welcome to CloudRiskAnalyser")
