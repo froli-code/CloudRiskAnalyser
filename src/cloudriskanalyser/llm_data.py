@@ -52,6 +52,7 @@ class LLMResearcher:
         # DEBUGGING: allows the user to ask test different questions
         user_input = "exit"
         while user_input != "exit":
+            print("DEBUG-MODE: Googled for: " + question_google)
             print("DEBUG-MODE: Insert question for LLM. Insert 'exit' to continue.")
             user_input = input("Input: ")
             if user_input != "exit":
