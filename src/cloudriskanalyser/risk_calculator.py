@@ -21,6 +21,7 @@ GDPR_COUNTRY_LIST: list[str] = ["Austria", "Belgium", "Bulgaria", "Croatia", "Cy
 # This class provides an Enum for storing the risk-levels
 #################################
 class RiskLevel(Enum):
+    NA = 0
     LOW = 1
     MEDIUM_LOW = 2
     MEDIUM = 3
@@ -77,18 +78,47 @@ class RiskCalculator:
 
     # Calculate overall risk based on information stored in this class
     def get_risk(self) -> None:
+        self.risk_overall: RiskLevel
 
         # Calculate 'lack of control' risk
         self.risk_lack_of_control: RiskLevel = self.get_risk_lack_of_control()
+        print("'Lack of control' risk is: " + self.risk_lack_of_control.name)
 
         # Calculate 'insec auth' risk
         self.risk_insec_auth: RiskLevel = self.get_risk_insec_auth()
+        print("'Insecure authentication' risk is: " + self.risk_insec_auth.name)
 
         # Calculate 'comp issues' risk
         self.risk_comp_issues: RiskLevel = self.get_risk_comp_issues()
+        print("'Compliance issues' risk is: " + self.risk_comp_issues.name)
+
+        # Calculate overall result
+        if self.risk_lack_of_control == RiskLevel.NA or \
+           self.risk_insec_auth == RiskLevel.NA or \
+           self.risk_comp_issues == RiskLevel.NA:
+            # If one risk was not calcluated, the overall risk is NA
+            self.risk_overall = RiskLevel.NA
+
+        else:
+            # This is being done by calculating the average of all the risk-outputs
+            risk_avg: float = (self.risk_lack_of_control.value + self.risk_insec_auth.value + self.risk_comp_issues.value) / 3
+            risk_avg_rnd: float = round((risk_avg + 0.5), 0)
+            risk_avg_rnd_int = int(risk_avg_rnd)
+
+            self.risk_overall = RiskLevel(risk_avg_rnd_int)
+
+        print("Overall risk is: " + self.risk_overall.name)
+
+        # Log instance variables (for debugging)
+        logger.info("RiskCalculator variables: " + str(vars(self)))
 
     # Calculate 'lack of control' risk
     def get_risk_lack_of_control(self) -> RiskLevel:
+
+        # Only assess if input variables are filled. Otherwise return "NA"
+        if not hasattr(self, 'csp_threat_model'):
+            logger.warning("Not possible to assess 'lack of control' risk. Input variables not set.")
+            return RiskLevel.NA
 
         # If HONEST BUT CURIOUS -> Low Risk
         # If CHEAP AND LAZY -> Medium Risk
@@ -105,6 +135,11 @@ class RiskCalculator:
     # Calculate 'insec auth' risk
     def get_risk_insec_auth(self) -> RiskLevel:
 
+        # Only assess if input variables are filled. Otherwise return "NA"
+        if not hasattr(self, 'csp_supports_mfa') or not hasattr(self, 'csp_supports_auth_protocols'):
+            logger.warning("Not possible to assess 'insec auth' risk. Input variables not set.")
+            return RiskLevel.NA
+
         # If neither MFA or SSO protocols are available, the risk will be "High".
         # If one of both are present, the risk will be "Low".
         if self.csp_supports_mfa or self.csp_supports_auth_protocols:
@@ -114,6 +149,11 @@ class RiskCalculator:
 
     # Calculate 'comp issues' risk
     def get_risk_comp_issues(self) -> RiskLevel:
+
+        # Only assess if input variables are filled. Otherwise return "NA"
+        if not hasattr(self, 'csp_default_countries') or not hasattr(self, 'user_country'):
+            logger.warning("Not possible to assess 'comp issues' risk. Input variables not set.")
+            return RiskLevel.NA
 
         # If UNKNOWN -> High Risk
         # If MULTIPLE COUNTRIES -> High Risk  -> Unclear how to check. This is currently not covered.
@@ -139,8 +179,3 @@ class RiskCalculator:
         # In this case the data is stored in any other country. -> High risk
         else:
             return RiskLevel.MEDIUM
-
-    # Print all instance variables, for testing
-    def print_instance_vars(self) -> None:
-        print("-- Printing RiskCalculator variables --")
-        print(vars(self))

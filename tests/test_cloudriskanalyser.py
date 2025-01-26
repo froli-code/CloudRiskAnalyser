@@ -244,6 +244,38 @@ def test_risk_calc_comp_issues_risk_high():
         assert False
 
 
+def test_risk_calc_all_no_inp():
+    # If no risk-parameters are set, the output should be "NA"
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+
+    risk_calculator.get_risk()
+
+    if risk_calculator.risk_lack_of_control == RiskLevel.NA and \
+       risk_calculator.risk_insec_auth == RiskLevel.NA and \
+       risk_calculator.risk_comp_issues == RiskLevel.NA and \
+       risk_calculator.risk_overall == RiskLevel.NA:
+        assert True
+    else:
+        assert False
+
+
+def test_risk_calc_all_medium():
+    # The overall risk level should be MEDIUM
+
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+
+    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.CHEAP_AND_LAZY)
+    risk_calculator.set_risk_params_insec_auth(True, False)
+    risk_calculator.set_risk_params_comp_issues(["United States"], ["Unknown"])
+
+    risk_calculator.get_risk()
+
+    if risk_calculator.risk_overall == RiskLevel.MEDIUM:
+        assert True
+    else:
+        assert False
+
+
 #################################
 # Shared Functions
 #################################

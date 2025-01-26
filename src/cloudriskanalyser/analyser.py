@@ -126,14 +126,14 @@ def main():
         sys.exit()
 
     # --- gather data for assessing risk
-    # get_risk_data_lack_of_control(application_url)
+    # risk_calculator = get_risk_data_lack_of_control(application_url)
 
     risk_calculator = get_risk_data_insec_auth(risk_calculator)
 
     risk_calculator = get_risk_data_comp_issues(risk_calculator)
 
     # --- calculate result
-    risk_calculator.print_instance_vars()
+    risk_calculator = risk_calculator.get_risk()
 
 
 if __name__ == "__main__":
