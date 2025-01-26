@@ -78,7 +78,9 @@ class LLMPrompts:
     PROMT_CHECK_CSP_GOOGLE: str = "Find out if {csp} is a cloud storage application. Only generate two questions."
 
     # --- Assessing the "Lack of control" risk
-    PROMT_CHECK_RISK_LACK_OF_CONTROL_1: str = "Assess if the cloud storage application "
+    # PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE: str = "Find out how many CVE vulnerabilities {csp} had in the last 5 years."
+    PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE: str = "cvedetails.com {csp} vulnerability list"
+    PROMT_CHECK_RISK_LACK_OF_CONTROL_1_DATA_EXTRACT: str = "How many CVE vulnerabilities did {csp} have in the last 2 years? List the CVE-IDs."
     PROMT_CHECK_RISK_LACK_OF_CONTROL_2: str = " can be considered 'Honest but curious', 'Cheap and lazy' or 'Malicious. \
                 A 'Honest but curious' application has not many security weaknesses, while a 'Cheap and lazy' application might have some. \
                 A 'Malicious' application will have many weaknesses. \
@@ -104,13 +106,3 @@ class LLMPrompts:
                 Only provide the country names of the additional ones in a list. \
                 If not possible, provide only the text 'unknown' without ANY other text, such as 'FINAL ANSWER'. \
                 If there are multiple results, separate them with semicolons."
-
-    # --------------------------------
-    # Shared Functions
-    # --------------------------------
-
-    # --- Concat the two strings for "Lack of control" risk, together with the name of the CSP
-    @classmethod
-    def get_promt_check_risk_lack_of_control(cls, csp: str) -> str:
-
-        return str(cls.PROMT_CHECK_RISK_LACK_OF_CONTROL_1 + csp + cls.PROMT_CHECK_RISK_LACK_OF_CONTROL_2)

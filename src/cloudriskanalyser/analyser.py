@@ -6,7 +6,7 @@ import warnings
 # Own modules
 from llm_data import LLMResearcher
 from llm_data import LLMPrompts as prm
-from risk_calculator import RiskCalculator
+from risk_calculator import RiskCalculator, CSPThreatModel
 
 #################################
 # Global variables
@@ -36,15 +36,19 @@ def is_valid_csp(csp_name: str) -> bool:
 
 
 # Evaluate the "Lack of Control" risk
-def get_risk_data_lack_of_control(csp_url: str) -> bool:
-    result = "NA"
+def get_risk_data_lack_of_control(risk_calculator: RiskCalculator) -> RiskCalculator:
+    csp_name: str = risk_calculator.csp_name
 
-    if result == "NA":
-        print("Lack of Control Risk: No valid output")
-        return False
-    else:
-        print("Output: " + result)
-        return True
+    result_control: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE.format(csp=csp_name),
+                                                               prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_1_DATA_EXTRACT.format(csp=csp_name)
+                                                               )
+
+    logger.info("Returning result from LLM: " + result_control)
+
+    # Currently always setting "HONEST_BUT_CURIOUS" because the data cannot be gathered correctly yet.
+    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.HONEST_BUT_CURIOUS)
+
+    return risk_calculator
 
 
 # Evaluate the "Insec Auth" risk
@@ -126,7 +130,7 @@ def main():
         sys.exit()
 
     # --- gather data for assessing risk
-    # risk_calculator = get_risk_data_lack_of_control(application_url)
+    risk_calculator = get_risk_data_lack_of_control(risk_calculator)
 
     risk_calculator = get_risk_data_insec_auth(risk_calculator)
 
