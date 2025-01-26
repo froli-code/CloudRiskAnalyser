@@ -36,7 +36,7 @@ def is_valid_csp(csp_name: str) -> bool:
 
 
 # Evaluate the "Lack of Control" risk
-def get_risk_lack_of_control(csp_url: str) -> bool:
+def get_risk_data_lack_of_control(csp_url: str) -> bool:
     result = "NA"
 
     if result == "NA":
@@ -48,7 +48,7 @@ def get_risk_lack_of_control(csp_url: str) -> bool:
 
 
 # Evaluate the "Insec Auth" risk
-def get_risk_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
+def get_risk_data_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
     csp_name = risk_calculator.csp_name
     result_mfa = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE.format(csp=csp_name),
                                                       prm.PROMT_CHECK_RISK_INSEC_AUTH_1_DATA_EXTRACT.format(csp=csp_name)
@@ -65,7 +65,7 @@ def get_risk_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
 
 
 # Evaluate the "Compliance Issues" risk
-def get_risk_comp_issues(risk_calculator: RiskCalculator) -> RiskCalculator:
+def get_risk_data_comp_issues(risk_calculator: RiskCalculator) -> RiskCalculator:
     csp_name = risk_calculator.csp_name
     result_default_countries: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_1_GOOGLE.format(csp=csp_name),
                                                                          prm.PROMT_CHECK_RISK_COMP_ISSUES_1_DATA_EXTRACT.format(csp=csp_name)
@@ -126,11 +126,11 @@ def main():
         sys.exit()
 
     # --- gather data for assessing risk
-    # get_risk_lack_of_control(application_url)
+    # get_risk_data_lack_of_control(application_url)
 
-    risk_calculator = get_risk_insec_auth(risk_calculator)
+    risk_calculator = get_risk_data_insec_auth(risk_calculator)
 
-    risk_calculator = get_risk_comp_issues(risk_calculator)
+    risk_calculator = get_risk_data_comp_issues(risk_calculator)
 
     # --- calculate result
     risk_calculator.print_instance_vars()
