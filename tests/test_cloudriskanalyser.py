@@ -3,6 +3,7 @@ import pytest
 
 # Own modules
 import analyser as cra
+from llm_researcher import DataGatheringMethod
 from risk_calculator import RiskCalculator
 from risk_calculator import RiskLevel
 from risk_calculator import CSPThreatModel
@@ -15,7 +16,7 @@ from risk_calculator import CSPThreatModel
 # --- Test the data-gathering for identifying a CSP
 def test_validate_csp_dropbox():
     # Dropbox is a valid CSP, result "True" expected
-    if cra.is_valid_csp("Dropbox"):
+    if cra.is_valid_csp("Dropbox", DataGatheringMethod.GEMINI_SEARCH_SEPARATE):
         assert True
     else:
         assert False
@@ -23,7 +24,7 @@ def test_validate_csp_dropbox():
 
 def test_validate_csp_onedrive():
     # Onedrive is a valid CSP, result "True" expected
-    if cra.is_valid_csp("Onedrive"):
+    if cra.is_valid_csp("Onedrive", DataGatheringMethod.GEMINI_SEARCH_SEPARATE):
         assert True
     else:
         assert False
@@ -31,7 +32,7 @@ def test_validate_csp_onedrive():
 
 def test_validate_csp_box():
     # Box is a valid CSP, result "True" expected
-    if cra.is_valid_csp("Box"):
+    if cra.is_valid_csp("Box", DataGatheringMethod.GEMINI_SEARCH_SEPARATE):
         assert True
     else:
         assert False
@@ -39,7 +40,7 @@ def test_validate_csp_box():
 
 def test_validate_csp_wikipedia():
     # Wikipedia is NOT avalid CSP, result "False" expected
-    if not cra.is_valid_csp("Wikipedia"):
+    if not cra.is_valid_csp("Wikipedia", DataGatheringMethod.GEMINI_SEARCH_SEPARATE):
         assert True
     else:
         assert False
@@ -47,7 +48,7 @@ def test_validate_csp_wikipedia():
 
 def test_validate_csp_asdf():
     # "asdf" is NOT avalid domainname, result "False" expected
-    if not cra.is_valid_csp("asdf"):
+    if not cra.is_valid_csp("asdf", DataGatheringMethod.GEMINI_SEARCH_SEPARATE):
         assert True
     else:
         assert False
@@ -59,7 +60,7 @@ def test_insec_auth_risk_dropbox():
     csp_name = "Dropbox"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = RiskCalculator(csp_name, user_country, DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
 
     if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
@@ -75,7 +76,7 @@ def test_insec_auth_risk_onedrive():
     csp_name = "Onedrive"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = RiskCalculator(csp_name, user_country, DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
 
     if (risk_calculator.csp_supports_mfa is True and
@@ -91,7 +92,7 @@ def test_insec_auth_risk_box():
     csp_name = "Dropbox"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = RiskCalculator(csp_name, user_country, DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
 
     if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
@@ -108,7 +109,7 @@ def test_comp_issues_risk_dropbox():
     # csp_default_countries: list[str] = ['United States']
     # csp_possible_countries: list[str] = ['Germany', ' Australia', ' Japan']
 
-    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country, DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator = cra.get_risk_data_comp_issues(risk_calculator)
 
     if risk_calculator.csp_default_countries != "unknown" and \
@@ -126,7 +127,7 @@ def test_comp_issues_risk_onedrive():
     csp_default_countries: list[str] = ['unknown']
     csp_possible_countries: list[str] = ['unknown']
 
-    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country, DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator = cra.get_risk_data_comp_issues(risk_calculator)
 
     if risk_calculator.csp_default_countries == csp_default_countries and \
@@ -140,7 +141,7 @@ def test_comp_issues_risk_onedrive():
 def test_risk_calc_lack_of_control_low():
     # If "HONEST_BUT_CURIOUS", the risk should be LOW
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.HONEST_BUT_CURIOUS)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.LOW:
@@ -152,7 +153,7 @@ def test_risk_calc_lack_of_control_low():
 def test_risk_calc_lack_of_control_medium():
     # If "CHEAP_AND_LAZY", the risk should be MEDIUM
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.CHEAP_AND_LAZY)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.MEDIUM:
@@ -164,7 +165,7 @@ def test_risk_calc_lack_of_control_medium():
 def test_risk_calc_lack_of_control_high():
     # If "MALICIOUS", the risk should be HIGH
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.MALICIOUS)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.HIGH:
@@ -176,7 +177,7 @@ def test_risk_calc_lack_of_control_high():
 def test_risk_calc_insec_auth_risk_low():
     # If MFA or SSO Protocols are supported, the risk should be LOW
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_insec_auth(True, False)
 
     if risk_calculator.get_risk_insec_auth() == RiskLevel.LOW:
@@ -188,7 +189,7 @@ def test_risk_calc_insec_auth_risk_low():
 def test_risk_calc_insec_auth_risk_high():
     # If neither MFA or SSO Protocols are supported, the risk should be HIGH
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_insec_auth(False, False)
 
     if risk_calculator.get_risk_insec_auth() == RiskLevel.HIGH:
@@ -200,7 +201,7 @@ def test_risk_calc_insec_auth_risk_high():
 def test_risk_calc_comp_issues_risk_low():
     # If The data-residency is in the same country as the user, the risk should be LOW.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_comp_issues(["Switzerland", "Sweden"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.LOW:
@@ -212,7 +213,7 @@ def test_risk_calc_comp_issues_risk_low():
 def test_risk_calc_comp_issues_risk_med_low():
     # If The data-residency is covered by GDPR (and the user too), the risk should be MEDIUM-LOW.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_comp_issues(["Belgium", "Sweden"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.MEDIUM_LOW:
@@ -224,7 +225,7 @@ def test_risk_calc_comp_issues_risk_med_low():
 def test_risk_calc_comp_issues_risk_medium():
     # If The data-residency is in a different country (not covered by GDPR), the risk should be MEDIUM.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_comp_issues(["United States"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.MEDIUM:
@@ -236,7 +237,7 @@ def test_risk_calc_comp_issues_risk_medium():
 def test_risk_calc_comp_issues_risk_high():
     # If The data-residency unknown, the risk should be HIGH.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
     risk_calculator.set_risk_params_comp_issues(["Unknown"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.HIGH:
@@ -247,7 +248,7 @@ def test_risk_calc_comp_issues_risk_high():
 
 def test_risk_calc_all_no_inp():
     # If no risk-parameters are set, the output should be "NA"
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
 
     risk_calculator.get_risk()
 
@@ -263,7 +264,7 @@ def test_risk_calc_all_no_inp():
 def test_risk_calc_all_medium():
     # The overall risk level should be MEDIUM
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", DataGatheringMethod.GEMINI_SEARCH_SEPARATE)
 
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.CHEAP_AND_LAZY)
     risk_calculator.set_risk_params_insec_auth(True, False)
