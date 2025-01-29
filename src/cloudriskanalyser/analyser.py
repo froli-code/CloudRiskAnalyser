@@ -5,7 +5,7 @@ import warnings
 
 # Own modules
 from llm_data import LLMPrompts as prm
-from llm_researcher import DataGatheringMethod, LLMResearcher, LLMResearcherGeminiSearch
+from llm_researcher import DataGatheringMethod, LLMResearcher, LLMResearcherGeminiSearch, LLMResearcherGeminiDirect
 from risk_calculator import RiskCalculator, CSPThreatModel
 
 #################################
@@ -118,7 +118,7 @@ def getResearchRunner(data_gathering_method: DataGatheringMethod) -> LLMResearch
         case DataGatheringMethod.GEMINI_SEARCH_SEPARATE:
             return (LLMResearcherGeminiSearch())
         case DataGatheringMethod.GEMINI_DIRECT:
-            pass
+            return (LLMResearcherGeminiDirect())
 
 
 #################################
@@ -140,8 +140,8 @@ def main():
     user_country = input("Please enter your residency country: ")  # noqa: F841
 
     # --- Set Data gathering method which is to be used
-    data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_SEARCH_SEPARATE
-    # data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_DIRECT
+    # data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_SEARCH_SEPARATE
+    data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_DIRECT
 
     # --- find out if data is a valid CSP
     print("Starting assessment...")

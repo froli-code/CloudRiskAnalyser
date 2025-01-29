@@ -6,7 +6,9 @@ from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_chroma import Chroma
 from langchain_community.retrievers.web_research import WebResearchRetriever
 from langchain_community.utilities.google_search import GoogleSearchAPIWrapper
+from langchain_core.messages.base import BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
 
 #################################
 # Global variables
@@ -84,3 +86,40 @@ class LLMResearcherGeminiSearch(LLMResearcher):
         result_cleansed = str(result["answer"]).replace("\n", "")
 
         return result_cleansed
+
+
+#################################
+# This class allows to provide a query directly to gemini AI
+#################################
+class LLMResearcherGeminiDirect(LLMResearcher):
+    # Setup everything needed for executing a research command
+    def __init__(self) -> None:
+
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-1.5-pro",
+            temperature=0,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2
+        )
+
+    # Search something
+    def get_research_results(self, question_google: str, question_data_extract: str) -> str:
+
+        logger.info("Asking the LLM: " + question_data_extract)
+
+        # Ask the LLM
+        result: BaseMessage = self.llm.invoke(question_data_extract)
+
+        logger.info("Answer from LLM: " + str(result.content))
+
+        # DEBUGGING: allows the user to ask test different questions
+        user_input: str = "exit"
+        while user_input != "exit":
+            print("DEBUG-MODE: Insert question for LLM. Insert 'exit' to continue.")
+            user_input = input("Input: ")
+            if user_input != "exit":
+                result = self.llm.invoke(user_input)
+                print("Debug LLM output: " + str(result.content))
+
+        return str(result.content)
