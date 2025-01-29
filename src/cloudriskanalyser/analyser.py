@@ -4,8 +4,8 @@ import sys
 import warnings
 
 # Own modules
-from llm_data import LLMResearcher
 from llm_data import LLMPrompts as prm
+from llm_researcher import DataGatheringMethod, LLMResearcher, LLMResearcherGeminiSearch, LLMResearcherGeminiDirect
 from risk_calculator import RiskCalculator, CSPThreatModel
 
 #################################
@@ -24,11 +24,12 @@ LOG_FORMAT: str = "%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)s - %(fu
 # Shared Functions
 #################################
 # Check if the provided application is a legitimate CSP
-def is_valid_csp(csp_name: str) -> bool:
+def is_valid_csp(csp_name: str, data_gathering_method: DataGatheringMethod) -> bool:
+    research_runner: LLMResearcher = getResearchRunner(data_gathering_method)
 
-    result = LLMResearcher().get_research_results(prm.PROMT_CHECK_CSP_GOOGLE.format(csp=csp_name),
-                                                  prm.PROMT_CHECK_CSP_DATA_EXTRACT.format(csp=csp_name)
-                                                  )
+    result: str = research_runner.get_research_results(prm.PROMT_CHECK_CSP_GOOGLE.format(csp=csp_name),
+                                                       prm.PROMT_CHECK_CSP_DATA_EXTRACT.format(csp=csp_name)
+                                                       )
 
     logger.info("Returning result from LLM: " + result)
 
@@ -39,7 +40,9 @@ def is_valid_csp(csp_name: str) -> bool:
 def get_risk_data_lack_of_control(risk_calculator: RiskCalculator) -> RiskCalculator:
     csp_name: str = risk_calculator.csp_name
 
-    result_control: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE.format(csp=csp_name),
+    research_runner: LLMResearcher = getResearchRunner(risk_calculator.data_gathering_method)
+
+    result_control: str = research_runner.get_research_results(prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE.format(csp=csp_name),
                                                                prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_1_DATA_EXTRACT.format(csp=csp_name)
                                                                )
 
@@ -54,10 +57,13 @@ def get_risk_data_lack_of_control(risk_calculator: RiskCalculator) -> RiskCalcul
 # Evaluate the "Insec Auth" risk
 def get_risk_data_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
     csp_name = risk_calculator.csp_name
-    result_mfa = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE.format(csp=csp_name),
+
+    research_runner: LLMResearcher = getResearchRunner(risk_calculator.data_gathering_method)
+
+    result_mfa = research_runner.get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE.format(csp=csp_name),
                                                       prm.PROMT_CHECK_RISK_INSEC_AUTH_1_DATA_EXTRACT.format(csp=csp_name)
                                                       )
-    result_proto = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_2_GOOGLE.format(csp=csp_name),
+    result_proto = research_runner.get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_2_GOOGLE.format(csp=csp_name),
                                                         prm.PROMT_CHECK_RISK_INSEC_AUTH_2_DATA_EXTRACT.format(csp=csp_name)
                                                         )
 
@@ -71,10 +77,13 @@ def get_risk_data_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
 # Evaluate the "Compliance Issues" risk
 def get_risk_data_comp_issues(risk_calculator: RiskCalculator) -> RiskCalculator:
     csp_name = risk_calculator.csp_name
-    result_default_countries: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_1_GOOGLE.format(csp=csp_name),
+
+    research_runner: LLMResearcher = getResearchRunner(risk_calculator.data_gathering_method)
+
+    result_default_countries: str = research_runner.get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_1_GOOGLE.format(csp=csp_name),
                                                                          prm.PROMT_CHECK_RISK_COMP_ISSUES_1_DATA_EXTRACT.format(csp=csp_name)
                                                                          )
-    result_possible_countries: str = LLMResearcher().get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_2_GOOGLE.format(csp=csp_name),
+    result_possible_countries: str = research_runner.get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_2_GOOGLE.format(csp=csp_name),
                                                                           prm.PROMT_CHECK_RISK_COMP_ISSUES_2_DATA_EXTRACT.format(csp=csp_name)
                                                                           )
 
@@ -103,6 +112,15 @@ def str_to_bool(input: str) -> bool:
         return False
 
 
+# This method returns an LLMResearchRunner, depending on the selected data-gathering method
+def getResearchRunner(data_gathering_method: DataGatheringMethod) -> LLMResearcher:
+    match data_gathering_method:
+        case DataGatheringMethod.GEMINI_SEARCH_SEPARATE:
+            return (LLMResearcherGeminiSearch())
+        case DataGatheringMethod.GEMINI_DIRECT:
+            return (LLMResearcherGeminiDirect())
+
+
 #################################
 # Main
 #################################
@@ -121,10 +139,14 @@ def main():
     application_name = input("Please enter the name of a cloud storage service which you would like to assess (e.g. Dropbox): ")
     user_country = input("Please enter your residency country: ")  # noqa: F841
 
+    # --- Set Data gathering method which is to be used
+    # data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_SEARCH_SEPARATE
+    data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_DIRECT
+
     # --- find out if data is a valid CSP
     print("Starting assessment...")
-    if (is_valid_csp(application_name)):
-        risk_calculator = RiskCalculator(application_name, user_country)
+    if (is_valid_csp(application_name, data_gathering_method)):
+        risk_calculator = RiskCalculator(application_name, user_country, data_gathering_method)
     else:
         print(application_name + " is no valid cloud storage service. Please try again.")
         sys.exit()

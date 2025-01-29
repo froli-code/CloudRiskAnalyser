@@ -3,63 +3,76 @@ import pytest
 
 # Own modules
 import analyser as cra
+from llm_researcher import DataGatheringMethod
 from risk_calculator import RiskCalculator
 from risk_calculator import RiskLevel
 from risk_calculator import CSPThreatModel
 
 
 #################################
+# CONSTANTS
+#################################
+DATA_GATHERING_METHOD: list[DataGatheringMethod] = [DataGatheringMethod.GEMINI_SEARCH_SEPARATE, DataGatheringMethod.GEMINI_DIRECT]
+# DATA_GATHERING_METHOD: list[DataGatheringMethod] = [DataGatheringMethod.GEMINI_DIRECT]
+
+
+#################################
 # Tests
 #################################
-
 # --- Test the data-gathering for identifying a CSP
-def test_validate_csp_dropbox():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_validate_csp_dropbox(n):
     # Dropbox is a valid CSP, result "True" expected
-    if cra.is_valid_csp("Dropbox"):
+    if cra.is_valid_csp("Dropbox", n):
         assert True
     else:
         assert False
 
 
-def test_validate_csp_onedrive():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_validate_csp_onedrive(n):
     # Onedrive is a valid CSP, result "True" expected
-    if cra.is_valid_csp("Onedrive"):
+    if cra.is_valid_csp("Onedrive", n):
         assert True
     else:
         assert False
 
 
-def test_validate_csp_box():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_validate_csp_box(n):
     # Box is a valid CSP, result "True" expected
-    if cra.is_valid_csp("Box"):
+    if cra.is_valid_csp("Box", n):
         assert True
     else:
         assert False
 
 
-def test_validate_csp_wikipedia():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_validate_csp_wikipedia(n):
     # Wikipedia is NOT avalid CSP, result "False" expected
-    if not cra.is_valid_csp("Wikipedia"):
+    if not cra.is_valid_csp("Wikipedia", n):
         assert True
     else:
         assert False
 
 
-def test_validate_csp_asdf():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_validate_csp_asdf(n):
     # "asdf" is NOT avalid domainname, result "False" expected
-    if not cra.is_valid_csp("asdf"):
+    if not cra.is_valid_csp("asdf", n):
         assert True
     else:
         assert False
 
 
 # --- Test the data-gathering for 'insec auth' risk
-def test_insec_auth_risk_dropbox():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_insec_auth_risk_dropbox(n):
     # "Dropbox" supports MFA and SAML, result "True" expected
     csp_name = "Dropbox"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = RiskCalculator(csp_name, user_country, n)
     risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
 
     if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
@@ -68,14 +81,15 @@ def test_insec_auth_risk_dropbox():
         pytest.skip("Unexpected LLM output")
 
 
-def test_insec_auth_risk_onedrive():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_insec_auth_risk_onedrive(n):
     # "Onedrive" supports MFA and SAML, result "True" expected
     # Sometimes it is not possible to find out if SAML is supported or not (because entra ID is responsible for authentication, and not onedrive)
     # Therefore both values will be accepted as ok.
     csp_name = "Onedrive"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = RiskCalculator(csp_name, user_country, n)
     risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
 
     if (risk_calculator.csp_supports_mfa is True and
@@ -86,12 +100,13 @@ def test_insec_auth_risk_onedrive():
         pytest.skip("Unexpected LLM output")
 
 
-def test_insec_auth_risk_box():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_insec_auth_risk_box(n):
     # "Box" supports MFA and SAML, result "True" expected
     csp_name = "Dropbox"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = RiskCalculator(csp_name, user_country, n)
     risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
 
     if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
@@ -101,14 +116,15 @@ def test_insec_auth_risk_box():
 
 
 # --- Test the data-gathering for 'comp-issues' risk
-def test_comp_issues_risk_dropbox():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_comp_issues_risk_dropbox(n):
     # Check which countries are supported by "Dropbox"
     csp_name: str = "Dropbox"
     user_country: str = "Switzerland"
     # csp_default_countries: list[str] = ['United States']
     # csp_possible_countries: list[str] = ['Germany', ' Australia', ' Japan']
 
-    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country, n)
     risk_calculator = cra.get_risk_data_comp_issues(risk_calculator)
 
     if risk_calculator.csp_default_countries != "unknown" and \
@@ -118,7 +134,8 @@ def test_comp_issues_risk_dropbox():
         pytest.skip("Unexpected LLM output")
 
 
-def test_comp_issues_risk_onedrive():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_comp_issues_risk_onedrive(n):
     # Check which countries are supported by "Onedrive"
     # There would be many possible locations, but the current application cannot identify this.
     csp_name: str = "Onedrive"
@@ -126,7 +143,7 @@ def test_comp_issues_risk_onedrive():
     csp_default_countries: list[str] = ['unknown']
     csp_possible_countries: list[str] = ['unknown']
 
-    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country, n)
     risk_calculator = cra.get_risk_data_comp_issues(risk_calculator)
 
     if risk_calculator.csp_default_countries == csp_default_countries and \
@@ -137,10 +154,11 @@ def test_comp_issues_risk_onedrive():
 
 
 # --- Test the risk-calculation functions
-def test_risk_calc_lack_of_control_low():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_lack_of_control_low(n):
     # If "HONEST_BUT_CURIOUS", the risk should be LOW
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.HONEST_BUT_CURIOUS)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.LOW:
@@ -149,10 +167,11 @@ def test_risk_calc_lack_of_control_low():
         assert False
 
 
-def test_risk_calc_lack_of_control_medium():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_lack_of_control_medium(n):
     # If "CHEAP_AND_LAZY", the risk should be MEDIUM
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.CHEAP_AND_LAZY)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.MEDIUM:
@@ -161,10 +180,11 @@ def test_risk_calc_lack_of_control_medium():
         assert False
 
 
-def test_risk_calc_lack_of_control_high():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_lack_of_control_high(n):
     # If "MALICIOUS", the risk should be HIGH
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.MALICIOUS)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.HIGH:
@@ -173,10 +193,11 @@ def test_risk_calc_lack_of_control_high():
         assert False
 
 
-def test_risk_calc_insec_auth_risk_low():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_insec_auth_risk_low(n):
     # If MFA or SSO Protocols are supported, the risk should be LOW
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
     risk_calculator.set_risk_params_insec_auth(True, False)
 
     if risk_calculator.get_risk_insec_auth() == RiskLevel.LOW:
@@ -185,10 +206,11 @@ def test_risk_calc_insec_auth_risk_low():
         assert False
 
 
-def test_risk_calc_insec_auth_risk_high():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_insec_auth_risk_high(n):
     # If neither MFA or SSO Protocols are supported, the risk should be HIGH
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
     risk_calculator.set_risk_params_insec_auth(False, False)
 
     if risk_calculator.get_risk_insec_auth() == RiskLevel.HIGH:
@@ -197,10 +219,11 @@ def test_risk_calc_insec_auth_risk_high():
         assert False
 
 
-def test_risk_calc_comp_issues_risk_low():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_comp_issues_risk_low(n):
     # If The data-residency is in the same country as the user, the risk should be LOW.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
     risk_calculator.set_risk_params_comp_issues(["Switzerland", "Sweden"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.LOW:
@@ -209,10 +232,11 @@ def test_risk_calc_comp_issues_risk_low():
         assert False
 
 
-def test_risk_calc_comp_issues_risk_med_low():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_comp_issues_risk_med_low(n):
     # If The data-residency is covered by GDPR (and the user too), the risk should be MEDIUM-LOW.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
     risk_calculator.set_risk_params_comp_issues(["Belgium", "Sweden"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.MEDIUM_LOW:
@@ -221,10 +245,11 @@ def test_risk_calc_comp_issues_risk_med_low():
         assert False
 
 
-def test_risk_calc_comp_issues_risk_medium():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_comp_issues_risk_medium(n):
     # If The data-residency is in a different country (not covered by GDPR), the risk should be MEDIUM.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
     risk_calculator.set_risk_params_comp_issues(["United States"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.MEDIUM:
@@ -233,10 +258,11 @@ def test_risk_calc_comp_issues_risk_medium():
         assert False
 
 
-def test_risk_calc_comp_issues_risk_high():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_comp_issues_risk_high(n):
     # If The data-residency unknown, the risk should be HIGH.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
     risk_calculator.set_risk_params_comp_issues(["Unknown"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.HIGH:
@@ -245,9 +271,10 @@ def test_risk_calc_comp_issues_risk_high():
         assert False
 
 
-def test_risk_calc_all_no_inp():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_all_no_inp(n):
     # If no risk-parameters are set, the output should be "NA"
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
 
     risk_calculator.get_risk()
 
@@ -260,10 +287,11 @@ def test_risk_calc_all_no_inp():
         assert False
 
 
-def test_risk_calc_all_medium():
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_risk_calc_all_medium(n):
     # The overall risk level should be MEDIUM
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
 
     risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.CHEAP_AND_LAZY)
     risk_calculator.set_risk_params_insec_auth(True, False)
