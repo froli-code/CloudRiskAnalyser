@@ -178,6 +178,6 @@ class LLMResearcherGeminiCVE(LLMResearcher):
                 result = self.qa_chain.invoke(user_input)
                 print("Debug LLM output: " + result["answer"])
 
-        result_cleansed = str(result["answer"]).replace("\n", "")
+        result_cleansed: str = result["answer"]
 
         return result_cleansed

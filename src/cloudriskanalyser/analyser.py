@@ -9,7 +9,7 @@ from datetime import date
 # Own modules
 from llm_data import LLMPrompts as prm
 from llm_researcher import DataGatheringMethod, LLMResearcher, LLMResearcherGeminiSearch, LLMResearcherGeminiDirect, LLMResearcherGeminiCVE
-from risk_calculator import RiskCalculator, CSPThreatModel
+from risk_calculator import RiskCalculator, CVEEntry
 
 #################################
 # Global variables
@@ -45,14 +45,28 @@ def get_risk_data_lack_of_control(risk_calculator: RiskCalculator, data_gatherin
 
     research_runner: LLMResearcher = getResearchRunner(data_gathering_method)
 
-    result_control: str = research_runner.get_research_results(csp_name,
-                                                               prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_DATA_EXTRACT.format(csp=csp_name, current_date=date.today())
-                                                               )
+    result_control = research_runner.get_research_results(csp_name,
+                                                          prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_DATA_EXTRACT.format(csp=csp_name, current_date=date.today())
+                                                          )
 
     logger.info("Returning result from LLM: " + result_control)
 
-    # Currently always setting "HONEST_BUT_CURIOUS" because the data cannot be gathered correctly yet.
-    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.HONEST_BUT_CURIOUS)
+    lines = result_control.splitlines()
+    cve_list: list[CVEEntry] = []
+
+    for line in lines:
+        entries = line.split(";")
+
+        try:
+            cvss_float = float(entries[1])
+            cve_list.append(CVEEntry(entries[0], cvss_float))
+        except ValueError:
+            logger.warn("Non-float value returned for CVSS score: \"" + entries[0] + "\"; \"" + entries[1] + "\"")
+        except IndexError:
+            logger.warn("Empty value returned for CVSS score. Ignoring this entry.")
+
+    # Provide CVE list to risk_calculator. It will then calculate the risk.
+    risk_calculator.set_risk_params_lack_of_control(cve_list)
 
     return risk_calculator
 

@@ -39,6 +39,15 @@ class CSPThreatModel(Enum):
 
 
 #################################
+# This class stores CVE entries
+#################################
+class CVEEntry():
+    def __init__(self, cve_id: str, cvss_score: float) -> None:
+        self.cve_id = cve_id
+        self.cvss_score = cvss_score
+
+
+#################################
 # This class takes information about cloud services as input, and calculates the risk of using it.
 #################################
 class RiskCalculator:
@@ -54,10 +63,10 @@ class RiskCalculator:
     # Shared Functions
     # --------------------------------
     # Set information for "lack of control" risk
-    def set_risk_params_lack_of_control(self, csp_threat_model: CSPThreatModel) -> None:
-        self.csp_threat_model = csp_threat_model
+    def set_risk_params_lack_of_control(self, cve_list: list[CVEEntry]) -> None:
+        self.cve_list = cve_list
 
-        logger.info("Risk variables set for 'lack of control risk'. nA")
+        logger.info("Risk variables set for 'lack of control risk': " + str(cve_list))
 
     # Set information for "insec auth" risk
     def set_risk_params_insec_auth(self, csp_supports_mfa: bool, csp_supports_auth_protocols: bool) -> None:
@@ -116,14 +125,27 @@ class RiskCalculator:
     def get_risk_lack_of_control(self) -> RiskLevel:
 
         # Only assess if input variables are filled. Otherwise return "NA"
-        if not hasattr(self, 'csp_threat_model'):
+        if not hasattr(self, 'cve_list'):
             logger.warning("Not possible to assess 'lack of control' risk. Input variables not set.")
             return RiskLevel.NA
+
+        cvss_total: float = 0.0
+
+        for cve in self.cve_list:
+            cvss_total += cve.cvss_score
+            logger.info("Total CVSS score in the last 2 years is: " + str(cvss_total))
+
+        match cvss_total:
+            case _ if cvss_total <= 20.0:
+                self.csp_threat_model = CSPThreatModel.HONEST_BUT_CURIOUS
+            case _ if cvss_total <= 50.0:
+                self.csp_threat_model = CSPThreatModel.CHEAP_AND_LAZY
+            case _ if cvss_total > 50.0:
+                self.csp_threat_model = CSPThreatModel.MALICIOUS
 
         # If HONEST BUT CURIOUS -> Low Risk
         # If CHEAP AND LAZY -> Medium Risk
         # If MALICIOUS -> High Risk
-
         match self.csp_threat_model:
             case CSPThreatModel.HONEST_BUT_CURIOUS:
                 return RiskLevel.LOW

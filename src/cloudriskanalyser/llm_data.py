@@ -14,7 +14,7 @@ class LLMPrompts:
     # --- Assessing the "Lack of control" risk
     PROMT_CHECK_RISK_LACK_OF_CONTROL_DATA_EXTRACT: str = "How many CVE vulnerabilities in your context relate to {csp} and were published in the last 2 years? \
                 Today is {current_date}. Provide the CVE-Number and the CVS-Scores. \
-                List only those two values, separated by semicolons. Omit ANY other text, such as 'FINAL ANSWER'."
+                List only those two values, separated by semicolons. Create one line for each CVE. Omit ANY other text, such as 'FINAL ANSWER'."
 
     # --- Assessing the "Insecure auth" risk
     PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE: str = "Find out if {csp} supports MFA.  Only generate two questions."
