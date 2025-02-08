@@ -176,3 +176,4 @@ cython_debug/
 
 # Execution stuff
 chroma_db_oai
+cve_data.json
