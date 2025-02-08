@@ -4,10 +4,7 @@ import pytest
 # Own modules
 import analyser as cra
 from llm_researcher import DataGatheringMethod
-from risk_calculator import RiskCalculator
-from risk_calculator import RiskLevel
-from risk_calculator import CSPThreatModel
-
+from risk_calculator import RiskCalculator, RiskLevel, CVEEntry
 
 #################################
 # CONSTANTS
@@ -72,8 +69,8 @@ def test_insec_auth_risk_dropbox(n):
     csp_name = "Dropbox"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country, n)
-    risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
+    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_data_insec_auth(risk_calculator, n)
 
     if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
         assert True
@@ -89,8 +86,8 @@ def test_insec_auth_risk_onedrive(n):
     csp_name = "Onedrive"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country, n)
-    risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
+    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_data_insec_auth(risk_calculator, n)
 
     if (risk_calculator.csp_supports_mfa is True and
         (risk_calculator.csp_supports_auth_protocols is True or
@@ -106,8 +103,8 @@ def test_insec_auth_risk_box(n):
     csp_name = "Dropbox"
     user_country = "Switzerland"
 
-    risk_calculator = RiskCalculator(csp_name, user_country, n)
-    risk_calculator = cra.get_risk_data_insec_auth(risk_calculator)
+    risk_calculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_data_insec_auth(risk_calculator, n)
 
     if risk_calculator.csp_supports_mfa and risk_calculator.csp_supports_auth_protocols:
         assert True
@@ -124,8 +121,8 @@ def test_comp_issues_risk_dropbox(n):
     # csp_default_countries: list[str] = ['United States']
     # csp_possible_countries: list[str] = ['Germany', ' Australia', ' Japan']
 
-    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country, n)
-    risk_calculator = cra.get_risk_data_comp_issues(risk_calculator)
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_data_comp_issues(risk_calculator, n)
 
     if risk_calculator.csp_default_countries != "unknown" and \
        risk_calculator.csp_possible_countries != "unknown":
@@ -143,8 +140,8 @@ def test_comp_issues_risk_onedrive(n):
     csp_default_countries: list[str] = ['unknown']
     csp_possible_countries: list[str] = ['unknown']
 
-    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country, n)
-    risk_calculator = cra.get_risk_data_comp_issues(risk_calculator)
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_data_comp_issues(risk_calculator, n)
 
     if risk_calculator.csp_default_countries == csp_default_countries and \
        risk_calculator.csp_possible_countries == csp_possible_countries:
@@ -154,12 +151,21 @@ def test_comp_issues_risk_onedrive(n):
 
 
 # --- Test the risk-calculation functions
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_lack_of_control_low(n):
-    # If "HONEST_BUT_CURIOUS", the risk should be LOW
+def test_risk_calc_lack_of_control_low():
+    # For "Calc Lack of Control" there is only one data gathering method (GEMINI_CVE_DB). Therefore this test is not parametrized.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
-    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.HONEST_BUT_CURIOUS)
+    # CVSS Score summary 3.1 -> should be HONEST_BUT_CURIOUS
+    # "HONEST_BUT_CURIOUS", risk should be LOW
+
+    cve_list: list[CVEEntry] = []
+
+    cve_list.append(CVEEntry("CVE-9999-1000", 1.1))
+    cve_list.append(CVEEntry("CVE-9999-1001", 2.0))
+
+    # Provide CVE list to risk_calculator. It will then calculate the risk.
+
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator.set_risk_params_lack_of_control(cve_list)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.LOW:
         assert True
@@ -167,12 +173,20 @@ def test_risk_calc_lack_of_control_low(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_lack_of_control_medium(n):
-    # If "CHEAP_AND_LAZY", the risk should be MEDIUM
+def test_risk_calc_lack_of_control_medium():
+    # For "Calc Lack of Control" there is only one data gathering method (GEMINI_CVE_DB). Therefore this test is not parametrized.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
-    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.CHEAP_AND_LAZY)
+    # CVSS Score summary 25.3 -> should be CHEAP_AND_LAZY
+    # "CHEAP_AND_LAZY", risk should be MEDIUM
+
+    cve_list: list[CVEEntry] = []
+
+    cve_list.append(CVEEntry("CVE-9999-2000", 9.1))
+    cve_list.append(CVEEntry("CVE-9999-2001", 8.7))
+    cve_list.append(CVEEntry("CVE-9999-2003", 7.5))
+
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator.set_risk_params_lack_of_control(cve_list)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.MEDIUM:
         assert True
@@ -180,12 +194,24 @@ def test_risk_calc_lack_of_control_medium(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_lack_of_control_high(n):
-    # If "MALICIOUS", the risk should be HIGH
+def test_risk_calc_lack_of_control_high():
+    # For "Calc Lack of Control" there is only one data gathering method (GEMINI_CVE_DB). Therefore this test is not parametrized.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
-    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.MALICIOUS)
+    # CVSS Score summary 56.7 -> should be MALICIOUS
+    # "MALICIOUS", risk should be HIGH
+
+    cve_list: list[CVEEntry] = []
+
+    cve_list.append(CVEEntry("CVE-9999-3000", 9.1))
+    cve_list.append(CVEEntry("CVE-9999-3001", 8.7))
+    cve_list.append(CVEEntry("CVE-9999-3003", 7.5))
+    cve_list.append(CVEEntry("CVE-9999-3004", 6.5))
+    cve_list.append(CVEEntry("CVE-9999-3005", 9.5))
+    cve_list.append(CVEEntry("CVE-9999-3006", 8.0))
+    cve_list.append(CVEEntry("CVE-9999-3007", 7.4))
+
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
+    risk_calculator.set_risk_params_lack_of_control(cve_list)
 
     if risk_calculator.get_risk_lack_of_control() == RiskLevel.HIGH:
         assert True
@@ -193,11 +219,10 @@ def test_risk_calc_lack_of_control_high(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_insec_auth_risk_low(n):
+def test_risk_calc_insec_auth_risk_low():
     # If MFA or SSO Protocols are supported, the risk should be LOW
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
     risk_calculator.set_risk_params_insec_auth(True, False)
 
     if risk_calculator.get_risk_insec_auth() == RiskLevel.LOW:
@@ -206,11 +231,10 @@ def test_risk_calc_insec_auth_risk_low(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_insec_auth_risk_high(n):
+def test_risk_calc_insec_auth_risk_high():
     # If neither MFA or SSO Protocols are supported, the risk should be HIGH
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
     risk_calculator.set_risk_params_insec_auth(False, False)
 
     if risk_calculator.get_risk_insec_auth() == RiskLevel.HIGH:
@@ -219,11 +243,10 @@ def test_risk_calc_insec_auth_risk_high(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_comp_issues_risk_low(n):
+def test_risk_calc_comp_issues_risk_low():
     # If The data-residency is in the same country as the user, the risk should be LOW.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland", n)
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
     risk_calculator.set_risk_params_comp_issues(["Switzerland", "Sweden"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.LOW:
@@ -232,11 +255,10 @@ def test_risk_calc_comp_issues_risk_low(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_comp_issues_risk_med_low(n):
+def test_risk_calc_comp_issues_risk_med_low():
     # If The data-residency is covered by GDPR (and the user too), the risk should be MEDIUM-LOW.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
     risk_calculator.set_risk_params_comp_issues(["Belgium", "Sweden"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.MEDIUM_LOW:
@@ -245,11 +267,10 @@ def test_risk_calc_comp_issues_risk_med_low(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_comp_issues_risk_medium(n):
+def test_risk_calc_comp_issues_risk_medium():
     # If The data-residency is in a different country (not covered by GDPR), the risk should be MEDIUM.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
     risk_calculator.set_risk_params_comp_issues(["United States"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.MEDIUM:
@@ -258,11 +279,10 @@ def test_risk_calc_comp_issues_risk_medium(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_comp_issues_risk_high(n):
+def test_risk_calc_comp_issues_risk_high():
     # If The data-residency unknown, the risk should be HIGH.
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
     risk_calculator.set_risk_params_comp_issues(["Unknown"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.HIGH:
@@ -271,10 +291,9 @@ def test_risk_calc_comp_issues_risk_high(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_all_no_inp(n):
+def test_risk_calc_all_no_inp():
     # If no risk-parameters are set, the output should be "NA"
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
 
     risk_calculator.get_risk()
 
@@ -287,13 +306,18 @@ def test_risk_calc_all_no_inp(n):
         assert False
 
 
-@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
-def test_risk_calc_all_medium(n):
+def test_risk_calc_all_medium():
     # The overall risk level should be MEDIUM
 
-    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany", n)
+    cve_list: list[CVEEntry] = []
 
-    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.CHEAP_AND_LAZY)
+    cve_list.append(CVEEntry("CVE-9999-2000", 9.1))
+    cve_list.append(CVEEntry("CVE-9999-2001", 8.7))
+    cve_list.append(CVEEntry("CVE-9999-2003", 7.5))
+
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+
+    risk_calculator.set_risk_params_lack_of_control(cve_list)
     risk_calculator.set_risk_params_insec_auth(True, False)
     risk_calculator.set_risk_params_comp_issues(["United States"], ["Unknown"])
 

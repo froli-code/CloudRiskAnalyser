@@ -1,12 +1,15 @@
 #!/usr/bin/python
 import logging
+import os
 import sys
 import warnings
 
+from datetime import date
+
 # Own modules
 from llm_data import LLMPrompts as prm
-from llm_researcher import DataGatheringMethod, LLMResearcher, LLMResearcherGeminiSearch, LLMResearcherGeminiDirect
-from risk_calculator import RiskCalculator, CSPThreatModel
+from llm_researcher import DataGatheringMethod, LLMResearcher, LLMResearcherGeminiSearch, LLMResearcherGeminiDirect, LLMResearcherGeminiCVE
+from risk_calculator import RiskCalculator, CVEEntry
 
 #################################
 # Global variables
@@ -37,28 +40,42 @@ def is_valid_csp(csp_name: str, data_gathering_method: DataGatheringMethod) -> b
 
 
 # Evaluate the "Lack of Control" risk
-def get_risk_data_lack_of_control(risk_calculator: RiskCalculator) -> RiskCalculator:
+def get_risk_data_lack_of_control(risk_calculator: RiskCalculator, data_gathering_method: DataGatheringMethod) -> RiskCalculator:
     csp_name: str = risk_calculator.csp_name
 
-    research_runner: LLMResearcher = getResearchRunner(risk_calculator.data_gathering_method)
+    research_runner: LLMResearcher = getResearchRunner(data_gathering_method)
 
-    result_control: str = research_runner.get_research_results(prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE.format(csp=csp_name),
-                                                               prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_1_DATA_EXTRACT.format(csp=csp_name)
-                                                               )
+    result_control = research_runner.get_research_results(csp_name,
+                                                          prm.PROMT_CHECK_RISK_LACK_OF_CONTROL_DATA_EXTRACT.format(csp=csp_name, current_date=date.today())
+                                                          )
 
     logger.info("Returning result from LLM: " + result_control)
 
-    # Currently always setting "HONEST_BUT_CURIOUS" because the data cannot be gathered correctly yet.
-    risk_calculator.set_risk_params_lack_of_control(CSPThreatModel.HONEST_BUT_CURIOUS)
+    lines = result_control.splitlines()
+    cve_list: list[CVEEntry] = []
+
+    for line in lines:
+        entries = line.split(";")
+
+        try:
+            cvss_float = float(entries[1])
+            cve_list.append(CVEEntry(entries[0], cvss_float))
+        except ValueError:
+            logger.warn("Non-float value returned for CVSS score: \"" + entries[0] + "\"; \"" + entries[1] + "\"")
+        except IndexError:
+            logger.warn("Empty value returned for CVSS score. Ignoring this entry.")
+
+    # Provide CVE list to risk_calculator. It will then calculate the risk.
+    risk_calculator.set_risk_params_lack_of_control(cve_list)
 
     return risk_calculator
 
 
 # Evaluate the "Insec Auth" risk
-def get_risk_data_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
+def get_risk_data_insec_auth(risk_calculator: RiskCalculator, data_gathering_method: DataGatheringMethod) -> RiskCalculator:
     csp_name = risk_calculator.csp_name
 
-    research_runner: LLMResearcher = getResearchRunner(risk_calculator.data_gathering_method)
+    research_runner: LLMResearcher = getResearchRunner(data_gathering_method)
 
     result_mfa = research_runner.get_research_results(prm.PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE.format(csp=csp_name),
                                                       prm.PROMT_CHECK_RISK_INSEC_AUTH_1_DATA_EXTRACT.format(csp=csp_name)
@@ -75,10 +92,10 @@ def get_risk_data_insec_auth(risk_calculator: RiskCalculator) -> RiskCalculator:
 
 
 # Evaluate the "Compliance Issues" risk
-def get_risk_data_comp_issues(risk_calculator: RiskCalculator) -> RiskCalculator:
+def get_risk_data_comp_issues(risk_calculator: RiskCalculator, data_gathering_method: DataGatheringMethod) -> RiskCalculator:
     csp_name = risk_calculator.csp_name
 
-    research_runner: LLMResearcher = getResearchRunner(risk_calculator.data_gathering_method)
+    research_runner: LLMResearcher = getResearchRunner(data_gathering_method)
 
     result_default_countries: str = research_runner.get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_1_GOOGLE.format(csp=csp_name),
                                                                          prm.PROMT_CHECK_RISK_COMP_ISSUES_1_DATA_EXTRACT.format(csp=csp_name)
@@ -119,6 +136,8 @@ def getResearchRunner(data_gathering_method: DataGatheringMethod) -> LLMResearch
             return (LLMResearcherGeminiSearch())
         case DataGatheringMethod.GEMINI_DIRECT:
             return (LLMResearcherGeminiDirect())
+        case DataGatheringMethod.GEMINI_CVE_DB:
+            return (LLMResearcherGeminiCVE())
 
 
 #################################
@@ -126,7 +145,7 @@ def getResearchRunner(data_gathering_method: DataGatheringMethod) -> LLMResearch
 #################################
 def main():
     # --- Logging setup
-    logging.basicConfig(filename='analyser.log', level=logging.INFO, format=LOG_FORMAT)
+    logging.basicConfig(filename='analyser.log', level=logging.DEBUG, format=LOG_FORMAT)
 
     # Debug google-searches
     # logging.getLogger("googleapiclient.discovery").setLevel(logging.DEBUG)
@@ -134,29 +153,28 @@ def main():
     # Prevent logging of lang-chain deprecation warnings (new package is not compatible currently)
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+    # Clear chroma vector store -> clear data from previous runs
+    os.system('rm -rdf chroma_db_oai/')
+
     # --- accept user input
     print("Welcome to CloudRiskAnalyser")
     application_name = input("Please enter the name of a cloud storage service which you would like to assess (e.g. Dropbox): ")
     user_country = input("Please enter your residency country: ")  # noqa: F841
 
-    # --- Set Data gathering method which is to be used
-    # data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_SEARCH_SEPARATE
-    data_gathering_method: DataGatheringMethod = DataGatheringMethod.GEMINI_DIRECT
-
     # --- find out if data is a valid CSP
     print("Starting assessment...")
-    if (is_valid_csp(application_name, data_gathering_method)):
-        risk_calculator = RiskCalculator(application_name, user_country, data_gathering_method)
+    if (is_valid_csp(application_name, DataGatheringMethod.GEMINI_DIRECT)):
+        risk_calculator = RiskCalculator(application_name, user_country)
     else:
         print(application_name + " is no valid cloud storage service. Please try again.")
         sys.exit()
 
     # --- gather data for assessing risk
-    risk_calculator = get_risk_data_lack_of_control(risk_calculator)
+    risk_calculator = get_risk_data_lack_of_control(risk_calculator, DataGatheringMethod.GEMINI_CVE_DB)
 
-    risk_calculator = get_risk_data_insec_auth(risk_calculator)
+    risk_calculator = get_risk_data_insec_auth(risk_calculator, DataGatheringMethod.GEMINI_DIRECT)
 
-    risk_calculator = get_risk_data_comp_issues(risk_calculator)
+    risk_calculator = get_risk_data_comp_issues(risk_calculator, DataGatheringMethod.GEMINI_DIRECT)
 
     # --- calculate result
     risk_calculator = risk_calculator.get_risk()

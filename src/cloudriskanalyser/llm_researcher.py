@@ -1,13 +1,18 @@
 import logging
+import uuid
 
 from abc import ABC, abstractmethod
 from enum import Enum
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_chroma import Chroma
+from langchain_community.document_loaders import JSONLoader
 from langchain_community.retrievers.web_research import WebResearchRetriever
 from langchain_community.utilities.google_search import GoogleSearchAPIWrapper
 from langchain_core.messages.base import BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
+# Own modules
+from cve_loader import CVELoader
 
 
 #################################
@@ -22,6 +27,7 @@ logger = logging.getLogger(__name__)
 class DataGatheringMethod(Enum):
     GEMINI_SEARCH_SEPARATE = 1
     GEMINI_DIRECT = 2
+    GEMINI_CVE_DB = 3
 
 
 #################################
@@ -44,7 +50,8 @@ class LLMResearcherGeminiSearch(LLMResearcher):
     def __init__(self) -> None:
         self.vectorstore = Chroma(
                                 embedding_function=GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
-                                persist_directory="./chroma_db_oai"
+                                persist_directory="./chroma_db_oai",
+                                collection_name=str(uuid.uuid4())
                             )
         self.llm = ChatGoogleGenerativeAI(
                                 model="gemini-1.5-flash",
@@ -123,3 +130,54 @@ class LLMResearcherGeminiDirect(LLMResearcher):
                 print("Debug LLM output: " + str(result.content))
 
         return str(result.content)
+
+
+#################################
+# This class allows to search on the CVE database and extract the content with gemini
+#################################
+class LLMResearcherGeminiCVE(LLMResearcher):
+    # Setup everything needed for executing a research command
+    def __init__(self) -> None:
+        self.vectorstore = Chroma(
+                                embedding_function=GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
+                                persist_directory="./chroma_db_oai",
+                                collection_name=str(uuid.uuid4())
+                            )
+        self.llm = ChatGoogleGenerativeAI(
+                                model="gemini-1.5-pro",
+                                temperature=0
+                            )
+        self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(self.llm, retriever=self.vectorstore.as_retriever())
+
+    # Search something
+    def get_research_results(self, csp_name: str, question_data_extract: str) -> str:
+        # Invoke the CVE API and search for all CVEs for this CSP
+        cve_loader: CVELoader = CVELoader()
+        cve_list_file_name = cve_loader.get_CVEs_for_string(csp_name)
+
+        loader: JSONLoader = JSONLoader(cve_list_file_name, jq_schema=".", text_content=False)
+        cve_documents = loader.load()
+
+        # Add json file to the vectorstore
+        self.vectorstore.add_documents(documents=cve_documents)
+
+        logger.info("Asking the LLM: " + question_data_extract)
+
+        # Ask the LLM to extract information from the vectorstore
+        result = self.qa_chain.invoke(question_data_extract)
+
+        logger.info("Answer from LLM: " + result["answer"])
+
+        # DEBUGGING: allows the user to ask test different questions
+        user_input = "exit"
+        while user_input != "exit":
+            print("DEBUG-MODE: Searched CVE data for: " + csp_name)
+            print("DEBUG-MODE: Insert question for LLM. Insert 'exit' to continue.")
+            user_input = input("Input: ")
+            if user_input != "exit":
+                result = self.qa_chain.invoke(user_input)
+                print("Debug LLM output: " + result["answer"])
+
+        result_cleansed: str = result["answer"]
+
+        return result_cleansed
