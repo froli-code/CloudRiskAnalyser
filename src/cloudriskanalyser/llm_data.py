@@ -12,13 +12,9 @@ class LLMPrompts:
     PROMT_CHECK_CSP_GOOGLE: str = "Find out if {csp} is a cloud storage application. Only generate two questions."
 
     # --- Assessing the "Lack of control" risk
-    # PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE: str = "Find out how many CVE vulnerabilities {csp} had in the last 5 years."
-    PROMT_CHECK_RISK_LACK_OF_CONTROL_1_GOOGLE: str = "cvedetails.com {csp} vulnerability list"
-    PROMT_CHECK_RISK_LACK_OF_CONTROL_1_DATA_EXTRACT: str = "How many CVE vulnerabilities did {csp} have in the last 2 years? List the CVE-IDs."
-    PROMT_CHECK_RISK_LACK_OF_CONTROL_2: str = " can be considered 'Honest but curious', 'Cheap and lazy' or 'Malicious. \
-                A 'Honest but curious' application has not many security weaknesses, while a 'Cheap and lazy' application might have some. \
-                A 'Malicious' application will have many weaknesses. \
-                Provide the answer in a variable called 'result'."
+    PROMT_CHECK_RISK_LACK_OF_CONTROL_DATA_EXTRACT: str = "How many CVE vulnerabilities in your context relate to {csp} and were published in the last 2 years? \
+                Today is {current_date}. Provide the CVE-Number and the CVS-Scores. \
+                List only those two values, separated by semicolons. Omit ANY other text, such as 'FINAL ANSWER'."
 
     # --- Assessing the "Insecure auth" risk
     PROMT_CHECK_RISK_INSEC_AUTH_1_GOOGLE: str = "Find out if {csp} supports MFA.  Only generate two questions."

@@ -1,7 +1,6 @@
 import logging
 
 from enum import Enum
-from llm_researcher import DataGatheringMethod
 
 #################################
 # Global variables
@@ -45,10 +44,9 @@ class CSPThreatModel(Enum):
 class RiskCalculator:
 
     # Init the class and take the name as input.
-    def __init__(self, csp_name: str, user_country: str, data_gathering_method: DataGatheringMethod) -> None:
+    def __init__(self, csp_name: str, user_country: str) -> None:
         self.csp_name: str = csp_name
         self.user_country: str = user_country
-        self.data_gathering_method: DataGatheringMethod = data_gathering_method
 
         logger.info("Initialized RiskCalculator object. csp_name: " + csp_name + "; user_country: " + user_country)
 
