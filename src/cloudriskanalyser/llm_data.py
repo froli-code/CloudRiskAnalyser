@@ -30,9 +30,3 @@ class LLMPrompts:
     PROMT_CHECK_RISK_COMP_ISSUES_1_DATA_EXTRACT: str = "In which countries does {csp} store their user's data by default? \
                 Only provide the default locations as output in a list. Ignore the ones additional to the default. \
                 If not possible, provide only the text 'unknown'. If there are multiple results, separate them with semicolons."
-
-    PROMT_CHECK_RISK_COMP_ISSUES_2_GOOGLE: str = "Find out if {csp} offers the possibility to select where the user's data is stored."
-    PROMT_CHECK_RISK_COMP_ISSUES_2_DATA_EXTRACT: str = "Does {csp} provide different data-storage locations, in addition to the default?\
-                Only provide the country names of the additional ones in a list. \
-                If not possible, provide only the text 'unknown' without ANY other text, such as 'FINAL ANSWER'. \
-                If there are multiple results, separate them with semicolons."

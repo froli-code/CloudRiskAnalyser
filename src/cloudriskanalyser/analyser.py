@@ -100,13 +100,11 @@ def get_risk_data_comp_issues(risk_calculator: RiskCalculator, data_gathering_me
     result_default_countries: str = research_runner.get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_1_GOOGLE.format(csp=csp_name),
                                                                          prm.PROMT_CHECK_RISK_COMP_ISSUES_1_DATA_EXTRACT.format(csp=csp_name)
                                                                          )
-    result_possible_countries: str = research_runner.get_research_results(prm.PROMT_CHECK_RISK_COMP_ISSUES_2_GOOGLE.format(csp=csp_name),
-                                                                          prm.PROMT_CHECK_RISK_COMP_ISSUES_2_DATA_EXTRACT.format(csp=csp_name)
-                                                                          )
 
-    logger.info("Returning result from LLM: " + result_default_countries + " / " + result_possible_countries)
+    logger.info("Returning result from LLM: " + result_default_countries)
 
-    risk_calculator.set_risk_params_comp_issues(result_default_countries.split(";"), result_possible_countries.split(";"))
+    # It is difficult to gather the "possible countries". This variable is currently filled with the default value "unknown".
+    risk_calculator.set_risk_params_comp_issues(result_default_countries.split(";"), "unknown")
 
     return risk_calculator
 
