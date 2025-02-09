@@ -118,35 +118,53 @@ def test_comp_issues_risk_dropbox(n):
     # Check which countries are supported by "Dropbox"
     csp_name: str = "Dropbox"
     user_country: str = "Switzerland"
-    # csp_default_countries: list[str] = ['United States']
-    # csp_possible_countries: list[str] = ['Germany', ' Australia', ' Japan']
+    csp_default_countries: list[str] = ["United States"]
 
     risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
     risk_calculator = cra.get_risk_data_comp_issues(risk_calculator, n)
 
-    if risk_calculator.csp_default_countries != "unknown" and \
-       risk_calculator.csp_possible_countries != "unknown":
+    if sorted(risk_calculator.csp_default_countries) == sorted(csp_default_countries):
         assert True
     else:
+        print("Expected countries: " + str(sorted(csp_default_countries)))
+        print("Received countries: " + str(sorted(risk_calculator.csp_default_countries)))
         pytest.skip("Unexpected LLM output")
 
 
 @pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
 def test_comp_issues_risk_onedrive(n):
     # Check which countries are supported by "Onedrive"
-    # There would be many possible locations, but the current application cannot identify this.
+    # They store their data globally.
     csp_name: str = "Onedrive"
     user_country: str = "Switzerland"
-    csp_default_countries: list[str] = ['unknown']
-    csp_possible_countries: list[str] = ['unknown']
+    csp_default_countries: list[str] = ["unknown"]
 
     risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
     risk_calculator = cra.get_risk_data_comp_issues(risk_calculator, n)
 
-    if risk_calculator.csp_default_countries == csp_default_countries and \
-       risk_calculator.csp_possible_countries == csp_possible_countries:
+    if sorted(risk_calculator.csp_default_countries) == sorted(csp_default_countries):
         assert True
     else:
+        print("Expected countries: " + str(sorted(csp_default_countries)))
+        print("Received countries: " + str(sorted(risk_calculator.csp_default_countries)))
+        pytest.skip("Unexpected LLM output")
+
+
+@pytest.mark.parametrize('n', DATA_GATHERING_METHOD)
+def test_comp_issues_risk_box(n):
+    # Check which countries are supported by "Box"
+    csp_name: str = "Box"
+    user_country: str = "Switzerland"
+    csp_default_countries: list[str] = ["United States"]
+
+    risk_calculator: RiskCalculator = RiskCalculator(csp_name, user_country)
+    risk_calculator = cra.get_risk_data_comp_issues(risk_calculator, n)
+
+    if sorted(risk_calculator.csp_default_countries) == sorted(csp_default_countries):
+        assert True
+    else:
+        print("Expected countries: " + str(sorted(csp_default_countries)))
+        print("Received countries: " + str(sorted(risk_calculator.csp_default_countries)))
         pytest.skip("Unexpected LLM output")
 
 

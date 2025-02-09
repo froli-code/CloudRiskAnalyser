@@ -80,6 +80,9 @@ class RiskCalculator:
     def set_risk_params_comp_issues(self, csp_default_countries: list[str], csp_possible_countries: list[str]) -> None:
         # If not known, "unknown" will be passed
         self.csp_default_countries = csp_default_countries
+
+        # This method is capable of accepting the "countries where the data can possibly be stored".
+        # However, since this is difficult to gather, it is currently not used.
         self.csp_possible_countries = csp_possible_countries
 
         logger.info("Risk variables set for 'comp issues risk'. csp_default_countries: " + str(csp_default_countries) +
@@ -171,9 +174,13 @@ class RiskCalculator:
 
     # Calculate 'comp issues' risk
     def get_risk_comp_issues(self) -> RiskLevel:
+        # Currently this method only considers csp_default_countries.
+        # The variable csp_possible_countries is not checked, because it is difficult to gather this information.
 
         # Only assess if input variables are filled. Otherwise return "NA"
-        if not hasattr(self, 'csp_default_countries') or not hasattr(self, 'user_country'):
+        if not hasattr(self, "csp_default_countries") or \
+           not hasattr(self, "user_country") or \
+           self.user_country == "":
             logger.warning("Not possible to assess 'comp issues' risk. Input variables not set.")
             return RiskLevel.NA
 
