@@ -265,7 +265,7 @@ def test_risk_calc_comp_issues_risk_low():
     # If The data-residency is in the same country as the user, the risk should be LOW.
 
     risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Switzerland")
-    risk_calculator.set_risk_params_comp_issues(["Switzerland", "Sweden"], ["Unknown"])
+    risk_calculator.set_risk_params_comp_issues(["Switzerland"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.LOW:
         assert True
@@ -286,7 +286,7 @@ def test_risk_calc_comp_issues_risk_med_low():
 
 
 def test_risk_calc_comp_issues_risk_medium():
-    # If The data-residency is in a different country (not covered by GDPR), the risk should be MEDIUM.
+    # If The data-residency is in one different country (not covered by GDPR), the risk should be MEDIUM.
 
     risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
     risk_calculator.set_risk_params_comp_issues(["United States"], ["Unknown"])
@@ -297,11 +297,23 @@ def test_risk_calc_comp_issues_risk_medium():
         assert False
 
 
-def test_risk_calc_comp_issues_risk_high():
+def test_risk_calc_comp_issues_risk_high1():
     # If The data-residency unknown, the risk should be HIGH.
 
     risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
     risk_calculator.set_risk_params_comp_issues(["Unknown"], ["Unknown"])
+
+    if risk_calculator.get_risk_comp_issues() == RiskLevel.HIGH:
+        assert True
+    else:
+        assert False
+
+
+def test_risk_calc_comp_issues_risk_high2():
+    # If The data is stored in multiple countries, not in the same jurisdiction, the risk should be HIGH.
+
+    risk_calculator: RiskCalculator = RiskCalculator("TestCSP", "Germany")
+    risk_calculator.set_risk_params_comp_issues(["Peru", "United States", "Sweden"], ["Unknown"])
 
     if risk_calculator.get_risk_comp_issues() == RiskLevel.HIGH:
         assert True

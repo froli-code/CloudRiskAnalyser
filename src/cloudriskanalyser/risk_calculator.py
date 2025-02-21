@@ -194,17 +194,22 @@ class RiskCalculator:
         if "Unknown" in self.csp_default_countries:
             return RiskLevel.HIGH
 
-        # User-Country supported -> Always low risk
-        elif self.user_country in self.csp_default_countries:
+        # Only user country available -> Always low risk
+        elif (self.user_country in self.csp_default_countries and
+              len(self.csp_default_countries) == 1):
             return RiskLevel.LOW
 
         # Country from similar jurisdiction -> Medium-Low risk
         # - If user country is in GDPR-List
-        # - And any CSP country is also in GDPR-List
+        # - And ALL CSP countries also in GDPR-List
         elif (self.user_country in GDPR_COUNTRY_LIST and
-              len(set(GDPR_COUNTRY_LIST) & set(self.csp_default_countries)) > 0):
+              set(self.csp_default_countries).issubset(set(GDPR_COUNTRY_LIST))):
             return RiskLevel.MEDIUM_LOW
 
-        # In this case the data is stored in any other country. -> High risk
-        else:
+        # If the data is stored in one other country (a single country). -> Medium risk
+        elif len(self.csp_default_countries) == 1:
             return RiskLevel.MEDIUM
+
+        # In this case the data is stored in any other countries (multiple countries). -> High risk
+        else:
+            return RiskLevel.HIGH
