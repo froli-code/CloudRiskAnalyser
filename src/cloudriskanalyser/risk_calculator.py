@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 #################################
 # Constants
 #################################
-GDPR_COUNTRY_LIST: list[str] = ["Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark",
+GDPR_COUNTRY_LIST: list[str] = ["Austria", "Belgium", "Bulgaria", "Croatia", "Republic of Cyprus", "Czech Republic", "Denmark",
                                 "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy",
-                                "Latvia", "Lithuania", "Luxembourg", "Malta", "The Netherlands", "Poland", "Portugal",
-                                "Romania", "Slovakia", "Slovenia", "Spain", "Sweden", "United Kingdom"]
+                                "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal",
+                                "Romania", "Slovakia", "Slovenia", "Spain", "Sweden"]
 
 
 #################################
