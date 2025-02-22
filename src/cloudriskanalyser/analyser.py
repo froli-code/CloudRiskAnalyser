@@ -138,6 +138,28 @@ def getResearchRunner(data_gathering_method: DataGatheringMethod) -> LLMResearch
             return (LLMResearcherGeminiCVE())
 
 
+def get_default_data_gath_method_from_user() -> DataGatheringMethod:
+
+    print("Different data-gathering methods are available. Please select from the list below (default: 1):")
+    print("1 - GEMINI_SEARCH_SEPARATE")
+    print("2 - GEMINI_DIRECT")
+
+    data_gathering_method_int: int = 1
+
+    try:
+        data_gathering_method_int = int(input("Please select: "))
+    except ValueError:
+        print("Non-nummeric value entered. Falling back to default")
+
+    match data_gathering_method_int:
+        case 1:
+            return DataGatheringMethod.GEMINI_SEARCH_SEPARATE
+        case 2:
+            return DataGatheringMethod.GEMINI_DIRECT
+        case _:
+            return DataGatheringMethod.GEMINI_SEARCH_SEPARATE
+
+
 #################################
 # Main
 #################################
@@ -157,11 +179,14 @@ def main():
     # --- accept user input
     print("Welcome to CloudRiskAnalyser")
     application_name = input("Please enter the name of a cloud storage service which you would like to assess (e.g. Dropbox): ")
-    user_country = input("Please enter your residency country: ")  # noqa: F841
+    user_country = input("Please enter your residency country: ")
+
+    # the method defined by the user applies to all risks, except get_risk_data_lack_of_control (because that always needs to access the CVE db)
+    dataGatheringMethod = get_default_data_gath_method_from_user()
 
     # --- find out if data is a valid CSP
     print("Starting assessment...")
-    if (is_valid_csp(application_name, DataGatheringMethod.GEMINI_DIRECT)):
+    if (is_valid_csp(application_name, dataGatheringMethod)):
         risk_calculator = RiskCalculator(application_name, user_country)
     else:
         print(application_name + " is no valid cloud storage service. Please try again.")
@@ -170,9 +195,9 @@ def main():
     # --- gather data for assessing risk
     risk_calculator = get_risk_data_lack_of_control(risk_calculator, DataGatheringMethod.GEMINI_CVE_DB)
 
-    risk_calculator = get_risk_data_insec_auth(risk_calculator, DataGatheringMethod.GEMINI_DIRECT)
+    risk_calculator = get_risk_data_insec_auth(risk_calculator, dataGatheringMethod)
 
-    risk_calculator = get_risk_data_comp_issues(risk_calculator, DataGatheringMethod.GEMINI_DIRECT)
+    risk_calculator = get_risk_data_comp_issues(risk_calculator, dataGatheringMethod)
 
     # --- calculate result
     risk_calculator = risk_calculator.get_risk()
