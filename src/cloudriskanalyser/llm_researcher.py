@@ -38,7 +38,7 @@ class LLMResearcher(ABC):
         pass
 
     @abstractmethod
-    def get_research_results(self, question_google: str, question_data_extract: str) -> str:
+    def get_research_results(self, question_google: str, question_data_extract: str, llm_test_mode: bool) -> str:
         pass
 
 
@@ -69,7 +69,7 @@ class LLMResearcherGeminiSearch(LLMResearcher):
         self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(self.llm, retriever=self.vectorstore.as_retriever())
 
     # Search something
-    def get_research_results(self, question_google: str, question_data_extract: str) -> str:
+    def get_research_results(self, question_google: str, question_data_extract: str, llm_test_mode: bool) -> str:
         # Search the web and store the result in the vectorstore
         self.web_research_retriever.invoke(question_google)
 
@@ -80,15 +80,15 @@ class LLMResearcherGeminiSearch(LLMResearcher):
 
         logger.info("Answer from LLM: " + result["answer"])
 
-        # DEBUGGING: allows the user to ask test different questions
-        user_input = "exit"
-        while user_input != "exit":
-            print("DEBUG-MODE: Googled for: " + question_google)
-            print("DEBUG-MODE: Insert question for LLM. Insert 'exit' to continue.")
-            user_input = input("Input: ")
-            if user_input != "exit":
-                result = self.qa_chain.invoke(user_input)
-                print("Debug LLM output: " + result["answer"])
+        # LLM-TEST-MODE: allows the user to ask test different questions
+        if llm_test_mode:
+            print("LLM-TEST-MODE - Entering LLM Test Mode. Insert 'exit' to continue.")
+            user_input = input("LLM-TEST-MODE - Input: ")
+
+            while user_input != "exit":
+                result_tst = self.qa_chain.invoke(user_input)
+                print("LLM-TEST-MODE - Output: " + result_tst["answer"])
+                user_input = input("LLM-TEST-MODE - Input: ")
 
         result_cleansed = str(result["answer"]).replace("\n", "")
 
@@ -111,7 +111,7 @@ class LLMResearcherGeminiDirect(LLMResearcher):
         )
 
     # Search something
-    def get_research_results(self, question_google: str, question_data_extract: str) -> str:
+    def get_research_results(self, question_google: str, question_data_extract: str, llm_test_mode: bool) -> str:
 
         logger.info("Asking the LLM: " + question_data_extract)
 
@@ -120,14 +120,15 @@ class LLMResearcherGeminiDirect(LLMResearcher):
 
         logger.info("Answer from LLM: " + str(result.content))
 
-        # DEBUGGING: allows the user to ask test different questions
-        user_input: str = "exit"
-        while user_input != "exit":
-            print("DEBUG-MODE: Insert question for LLM. Insert 'exit' to continue.")
-            user_input = input("Input: ")
-            if user_input != "exit":
-                result = self.llm.invoke(user_input)
-                print("Debug LLM output: " + str(result.content))
+        # LLM-TEST-MODE: allows the user to ask test different questions
+        if llm_test_mode:
+            print("LLM-TEST-MODE - Entering LLM Test Mode. Insert 'exit' to continue.")
+            user_input = input("LLM-TEST-MODE - Input: ")
+
+            while user_input != "exit":
+                result_tst = self.llm.invoke(user_input)
+                print("LLM-TEST-MODE - Output: " + str(result_tst.content))
+                user_input = input("LLM-TEST-MODE - Input: ")
 
         return str(result.content)
 
@@ -150,7 +151,7 @@ class LLMResearcherGeminiCVE(LLMResearcher):
         self.qa_chain = RetrievalQAWithSourcesChain.from_chain_type(self.llm, retriever=self.vectorstore.as_retriever())
 
     # Search something
-    def get_research_results(self, csp_name: str, question_data_extract: str) -> str:
+    def get_research_results(self, csp_name: str, question_data_extract: str, llm_test_mode: bool) -> str:
         # Invoke the CVE API and search for all CVEs for this CSP
         cve_loader: CVELoader = CVELoader()
         cve_list_file_name = cve_loader.get_CVEs_for_string(csp_name)
@@ -168,15 +169,15 @@ class LLMResearcherGeminiCVE(LLMResearcher):
 
         logger.info("Answer from LLM: " + result["answer"])
 
-        # DEBUGGING: allows the user to ask test different questions
-        user_input = "exit"
-        while user_input != "exit":
-            print("DEBUG-MODE: Searched CVE data for: " + csp_name)
-            print("DEBUG-MODE: Insert question for LLM. Insert 'exit' to continue.")
-            user_input = input("Input: ")
-            if user_input != "exit":
-                result = self.qa_chain.invoke(user_input)
-                print("Debug LLM output: " + result["answer"])
+        # LLM-TEST-MODE: allows the user to ask test different questions
+        if llm_test_mode:
+            print("LLM-TEST-MODE - Entering LLM Test Mode. Insert 'exit' to continue.")
+            user_input = input("LLM-TEST-MODE - Input: ")
+
+            while user_input != "exit":
+                result_tst = self.qa_chain.invoke(user_input)
+                print("LLM-TEST-MODE - Output: " + result_tst["answer"])
+                user_input = input("LLM-TEST-MODE - Input: ")
 
         result_cleansed: str = result["answer"]
 
