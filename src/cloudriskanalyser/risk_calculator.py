@@ -66,15 +66,22 @@ class RiskCalculator:
     def set_risk_params_lack_of_control(self, cve_list: list[CVEEntry]) -> None:
         self.cve_list = cve_list
 
-        logger.info("Risk variables set for 'lack of control risk': " + str(cve_list))
+        info_string: str = ("Risk variables set for 'lack of control risk': \n")
+        for cve in cve_list:
+            info_string += (cve.cve_id + "; " + str(cve.cvss_score) + "\n")
+
+        print(info_string)
+        logger.info(info_string)
 
     # Set information for "insec auth" risk
     def set_risk_params_insec_auth(self, csp_supports_mfa: bool, csp_supports_auth_protocols: bool) -> None:
         self.csp_supports_mfa = csp_supports_mfa
         self.csp_supports_auth_protocols = csp_supports_auth_protocols
 
-        logger.info("Risk variables set for 'insec auth risk'. csp_supports_mfa: " + str(csp_supports_mfa) +
-                    "; csp_supports_auth_protocols: " + str(csp_supports_auth_protocols))
+        info_string: str = ("Risk variables set for 'insec auth risk'. csp_supports_mfa: " + str(csp_supports_mfa) +
+                            "; csp_supports_auth_protocols: " + str(csp_supports_auth_protocols))
+        print(info_string)
+        logger.info(info_string)
 
     # Set information for "comp_issues" risk
     def set_risk_params_comp_issues(self, csp_default_countries: list[str], csp_possible_countries: list[str]) -> None:
@@ -85,8 +92,9 @@ class RiskCalculator:
         # However, since this is difficult to gather, it is currently not used.
         self.csp_possible_countries = csp_possible_countries
 
-        logger.info("Risk variables set for 'comp issues risk'. csp_default_countries: " + str(csp_default_countries) +
-                    "; csp_possible_countries: " + str(csp_possible_countries))
+        info_string: str = ("Risk variables set for 'comp issues risk'. csp_default_countries: " + str(csp_default_countries))
+        print(info_string)
+        logger.info(info_string)
 
     # Calculate overall risk based on information stored in this class
     def get_risk(self) -> None:
