@@ -1,5 +1,6 @@
 import logging
 
+from datetime import datetime
 from enum import Enum
 
 #################################
@@ -58,6 +59,8 @@ class RiskCalculator:
         self.user_country: str = user_country
 
         logger.info("Initialized RiskCalculator object. csp_name: " + csp_name + "; user_country: " + user_country)
+
+        self.assessment_start_time: datetime = datetime.now()
 
     # --------------------------------
     # Shared Functions
@@ -128,6 +131,12 @@ class RiskCalculator:
             self.risk_overall = RiskLevel(risk_avg_rnd_int)
 
         print("Overall risk is: " + self.risk_overall.name)
+
+        self.assessment_end_time: datetime = datetime.now()
+
+        duration = self.assessment_end_time - self.assessment_start_time
+
+        print("Duration for assessment: " + str(duration.total_seconds()) + " seconds")
 
         # Log instance variables (for debugging)
         logger.info("RiskCalculator variables: " + str(vars(self)))
