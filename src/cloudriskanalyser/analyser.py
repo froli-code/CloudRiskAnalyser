@@ -226,6 +226,7 @@ def main():
     # --- find out if data is a valid CSP
     print("Starting assessment...")
     if (is_valid_csp(application_name, data_gathering_method, llm_test_mode)):
+        print(application_name + " is a valid cloud storage service. Continuing...")
         risk_calculator = RiskCalculator(application_name, user_country)
     else:
         print(application_name + " is no valid cloud storage service. Please try again.")
