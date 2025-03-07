@@ -207,8 +207,8 @@ class RiskCalculator:
         # If OTHER COUNTRY, similar jurisdiction -> Medium-Low Risk
         # If SAME COUNTRY -> Low Risk
 
-        # Unknown -> Always high risk
-        if "Unknown" in self.csp_default_countries:
+        # unknown -> Always high risk
+        if "unknown" in (country.lower() for country in self.csp_default_countries):
             return RiskLevel.HIGH
 
         # Only user country available -> Always low risk
