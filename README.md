@@ -4,6 +4,9 @@ Assessses the risk to data confidentiality when using particular cloud storage s
 
 ![Tests](https://github.com/froli-code/CloudRiskAnalyser/actions/workflows/tests.yml/badge.svg)
 
+> [!IMPORTANT]  
+> As of September 2025 this project is not maintained anymore.
+
 ## Requirements & setup
 
 * The project was built and tested under a linux operating system (Debian 12). While it should be platform independent, this was not tested and is currently not supported.
